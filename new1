@@ -206,13 +206,21 @@ private String getNestedStringValue(Map<String, Object> jsonMap, String nestedKe
     return (String) value;
 }
 
+--------------------------------------------------
+
 private void saveJsonToXml(String filePath, Map<String, Object> jsonMap) throws IOException {
-    // Format the tradeDate value to "YYYY-MM-DD"
-    String tradeDate = getNestedStringValue(jsonMap, "PSET.tradeDate");
+    // Parse the tradeDate value
+    String tradeDateStr = getNestedStringValue(jsonMap, "PSET.tradeDate");
+    LocalDate tradeDate = null;
+    if (tradeDateStr != null) {
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        tradeDate = LocalDate.parse(tradeDateStr, dateFormatter);
+    }
+
+    // Update the tradeDate value in the JSON map
     if (tradeDate != null) {
-        LocalDate parsedDate = LocalDate.parse(tradeDate, DateTimeFormatter.ISO_LOCAL_DATE);
-        String formattedDate = parsedDate.format(DateTimeFormatter.ISO_DATE);
-        jsonMap.put("PSET.tradeDate", formattedDate);
+        String formattedTradeDate = tradeDate.format(DateTimeFormatter.ISO_DATE);
+        jsonMap.put("PSET.tradeDate", formattedTradeDate);
     }
 
     // Save the JSON map as an XML file
