@@ -168,3 +168,55 @@ private void saveJsonToFile(String filePath, Map<String, Object> jsonMap) throws
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.writeValue(new File(filePath), jsonMap);
 }
+
+
+-------------------------------------------------------------------------------------------------
+
+private void saveJsonFiles(List<Map<String, Object>> jsonList) throws IOException {
+    if (jsonList.isEmpty()) {
+        return; // Return early if the JSON list is empty
+    }
+
+    String folderPath = "path/to/save/";
+    File folder = new File(folderPath);
+    if (!folder.exists()) {
+        folder.mkdirs();
+    }
+
+    for (int i = 0; i < jsonList.size(); i++) {
+        Map<String, Object> jsonMap = jsonList.get(i);
+        String accountId = (String) jsonMap.get("accountId");
+        String isin = getNestedStringValue(jsonMap, "assets.isin");
+        String fileName = accountId + "_" + isin;
+        String filePath = folderPath + fileName + ".xml";
+        saveJsonToXml(filePath, jsonMap);
+    }
+}
+
+private String getNestedStringValue(Map<String, Object> jsonMap, String nestedKey) {
+    String[] keys = nestedKey.split("\\.");
+    Object value = jsonMap;
+    for (String key : keys) {
+        if (value instanceof Map) {
+            value = ((Map<String, Object>) value).get(key);
+        } else {
+            return null;
+        }
+    }
+    return (String) value;
+}
+
+private void saveJsonToXml(String filePath, Map<String, Object> jsonMap) throws IOException {
+    // Format the tradeDate value to "YYYY-MM-DD"
+    String tradeDate = getNestedStringValue(jsonMap, "PSET.tradeDate");
+    if (tradeDate != null) {
+        LocalDate parsedDate = LocalDate.parse(tradeDate, DateTimeFormatter.ISO_LOCAL_DATE);
+        String formattedDate = parsedDate.format(DateTimeFormatter.ISO_DATE);
+        jsonMap.put("PSET.tradeDate", formattedDate);
+    }
+
+    // Save the JSON map as an XML file
+    ObjectMapper objectMapper = new XmlMapper();
+    objectMapper.writeValue(new File(filePath), jsonMap);
+}
+
