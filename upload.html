@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload Excel File</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('#excelFileInput').change(function() {
+        var fileData = new FormData();
+        fileData.append('file', $('#excelFileInput')[0].files[0]);
+
+        $.ajax({
+          url: '/upload',
+          type: 'POST',
+          data: fileData,
+          cache: false,
+          contentType: false,
+          processData: false,
+          success: function(response) {
+            console.log('Upload successful');
+            // Process the response as needed
+          },
+          error: function(xhr, status, error) {
+            console.error('Upload failed:', error);
+          }
+        });
+      });
+    });
+  </script>
+</head>
+<body>
+  <input type="file" id="excelFileInput" accept=".xls, .xlsx" />
+</body>
+</html>
