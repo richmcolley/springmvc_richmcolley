@@ -146,3 +146,25 @@ private boolean isAllRequiredFieldsPresent(Map<String, Object> jsonMap) {
     // Check if all required fields are present in the JSON map
     return jsonMap.keySet().containsAll(requiredFields);
 }
+
+------------------------------------------------------------------------
+
+private void saveJsonFiles(List<Map<String, Object>> jsonList) throws IOException {
+    String folderPath = "path/to/save/";
+    File folder = new File(folderPath);
+    if (!folder.exists()) {
+        folder.mkdirs();
+    }
+
+    for (int i = 0; i < jsonList.size(); i++) {
+        Map<String, Object> jsonMap = jsonList.get(i);
+        String fileName = generateUniqueFileName();
+        String filePath = folderPath + fileName + ".json";
+        saveJsonToFile(filePath, jsonMap);
+    }
+}
+
+private void saveJsonToFile(String filePath, Map<String, Object> jsonMap) throws IOException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.writeValue(new File(filePath), jsonMap);
+}
