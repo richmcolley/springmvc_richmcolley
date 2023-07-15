@@ -1,0 +1,148 @@
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+public class ExcelToJsonController {
+
+    @PostMapping("/upload")
+    public String handleFileUpload(@RequestParam("file") MultipartFile file) {
+        if (!file.isEmpty()) {
+            try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+                Sheet sheet = workbook.getSheetAt(0); // Assuming the data is in the first sheet
+                Map<String, Object> jsonMap = convertExcelToJson(sheet);
+                saveJsonToFile(jsonMap);
+                return "File uploaded and converted successfully.";
+            } catch (IOException e) {
+                e.printStackTrace();
+                return "Error occurred during file upload and conversion.";
+            }
+        }
+        return "Uploaded file is empty.";
+    }
+
+    private Map<String, Object> convertExcelToJson(Sheet sheet) {
+        Map<String, Object> jsonMap = new HashMap<>();
+        // Convert Excel data to JSON map
+        return jsonMap;
+    }
+
+    private void saveJsonToFile(Map<String, Object> jsonMap) throws IOException {
+        String fileName = generateUniqueFileName();
+        String filePath = "src/main/resources/json/" + fileName + ".json";
+        File jsonFile = new File(filePath);
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.writeValue(jsonFile, jsonMap);
+    }
+
+    private String generateUniqueFileName() {
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        return now.format(formatter);
+    }
+
+}
+
+-----------------------------------------------------------------
+
+private Map<String, Object> convertExcelToJson(Sheet sheet) {
+    Map<String, Object> jsonMap = new HashMap<>();
+    // Convert Excel data to JSON map
+    return jsonMap;
+}
+
+-----------------------------------------------------------------
+
+private List<Map<String, Object>> convertExcelToJson(Sheet sheet) {
+    List<Map<String, Object>> jsonList = new ArrayList<>();
+
+    for (int rowIndex = 1; rowIndex < sheet.getPhysicalNumberOfRows(); rowIndex++) {
+        Row row = sheet.getRow(rowIndex);
+        if (row != null) {
+            Map<String, Object> jsonMap = new HashMap<>();
+
+            // Populate top-level properties
+            jsonMap.put("accountId", getStringValue(row.getCell(0)));
+            jsonMap.put("externalReference", getStringValue(row.getCell(1)));
+            jsonMap.put("transactionId", getStringValue(row.getCell(2)));
+            jsonMap.put("transactionStatus", getStringValue(row.getCell(3)));
+            jsonMap.put("transaction_type", getStringValue(row.getCell(4)));
+            jsonMap.put("transactionmode", getStringValue(row.getCell(5)));
+            jsonMap.put("channel", getStringValue(row.getCell(6)));
+            jsonMap.put("business", getStringValue(row.getCell(7)));
+            jsonMap.put("productType", getStringValue(row.getCell(8)));
+            jsonMap.put("errors", getStringValue(row.getCell(9)));
+            jsonMap.put("accountH", getStringValue(row.getCell(10)));
+
+            // Populate assets object
+            Map<String, Object> assetsMap = new HashMap<>();
+            assetsMap.put("isin", getStringValue(row.getCell(11)));
+            assetsMap.put("sed", getStringValue(row.getCell(12)));
+            assetsMap.put("unit", getStringValue(row.getCell(13)));
+            assetsMap.put("cR", getStringValue(row.getCell(14)));
+            jsonMap.put("assets", assetsMap);
+
+            // Populate PSET object
+            Map<String, Object> psetMap = new HashMap<>();
+
+            // Populate crest object within PSET
+            Map<String, Object> crestMap = new HashMap<>();
+
+            // Populate acquiring object within crest
+            Map<String, Object> acquiringMap = new HashMap<>();
+            acquiringMap.put("id", getStringValue(row.getCell(15)));
+            crestMap.put("acquiring", acquiringMap);
+
+            // Populate ceding object within crest
+            Map<String, Object> cedingMap = new HashMap<>();
+            cedingMap.put("id", getStringValue(row.getCell(16)));
+            crestMap.put("ceding", cedingMap);
+
+            psetMap.put("crest", crestMap);
+            psetMap.put("tradeDate", getStringValue(row.getCell(17)));
+            psetMap.put("sDate", getStringValue(row.getCell(18)));
+
+            jsonMap.put("PSET", psetMap);
+
+            // Add the JSON map to the list only if all required fields are present
+            if (isAllRequiredFieldsPresent(jsonMap)) {
+                jsonList.add(jsonMap);
+            }
+        }
+    }
+
+    return jsonList;
+}
+
+private String getStringValue(Cell cell) {
+    if (cell == null) {
+        return null;
+    }
+    cell.setCellType(CellType.STRING);
+    String cellValue = cell.getStringCellValue();
+    return StringUtils.hasText(cellValue) ? cellValue.trim() : null;
+}
+
+private boolean isAllRequiredFieldsPresent(Map<String, Object> jsonMap) {
+    // Define the required field names
+    List<String> requiredFields = Arrays.asList(
+        "accountId", "externalReference", "transactionId", "transactionStatus",
+        "transaction_type", "transactionmode", "channel", "business",
+        "productType", "errors", "accountH"
+    );
+
+    // Check if all required fields are present in the JSON map
+    return jsonMap.keySet().containsAll(requiredFields);
+}
