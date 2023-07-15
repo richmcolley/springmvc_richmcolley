@@ -208,20 +208,30 @@ private String getNestedStringValue(Map<String, Object> jsonMap, String nestedKe
 
 --------------------------------------------------
 
-private void saveJsonToXml(String filePath, Map<String, Object> jsonMap) throws IOException {
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import org.apache.poi.ss.usermodel.DateUtil;
+
+private void saveJsonToXml(String filePath, Map<String, Object> jsonMap, Sheet sheet, DataFormatter dataFormatter) throws IOException {
     // Parse the tradeDate value
-    String tradeDateStr = getNestedStringValue(jsonMap, "PSET.tradeDate");
+    double tradeDateValue = sheet.getRow(3).getCell(0).getNumericCellValue();
     LocalDate tradeDate = null;
-    if (tradeDateStr != null) {
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        tradeDate = LocalDate.parse(tradeDateStr, dateFormatter);
+    if (DateUtil.isCellDateFormatted(sheet.getRow(3).getCell(0))) {
+        tradeDate = sheet.getRow(3).getCell(0).getDateCellValue()
+                .toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+    } else {
+        tradeDate = LocalDate.of(1900, 1, 1).plusDays((int) tradeDateValue - 2);
     }
 
+    // Format the tradeDate value to "YYYY-MM-DD"
+    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    String formattedTradeDate = tradeDate.format(dateFormatter);
+
     // Update the tradeDate value in the JSON map
-    if (tradeDate != null) {
-        String formattedTradeDate = tradeDate.format(DateTimeFormatter.ISO_DATE);
-        jsonMap.put("PSET.tradeDate", formattedTradeDate);
-    }
+    jsonMap.put("PSET.tradeDate", formattedTradeDate);
 
     // Save the JSON map as an XML file
     ObjectMapper objectMapper = new XmlMapper();
