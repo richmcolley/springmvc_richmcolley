@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Excel Upload</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .even-row {
+      background-color: #f2f2f2;
+    }
+  </style>
+  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+  <h1>Excel Upload</h1>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleFileSelect(event)" />
+    <input type="button" value="Submit" id="submitBtn" style="display: none" onclick="handleSubmitClick()" />
+  </form>
+  <div id="tableContainer"></div>
+
+  <script>
+    var jsonDataToSend = null; // Store JSON data for submit
+
+    function handleFileSelect(event) {
+      var file = event.target.files[0];
+
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var data = new Uint8Array(e.target.result);
+          var workbook = XLSX.read(data, { type: 'array' });
+          var worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          var tableContainer = document.getElementById('tableContainer');
+
+          // Clear previous table data
+          tableContainer.innerHTML = '';
+
+          // Create table
+          var table = document.createElement('table');
+          table.id = 'dataTable';
+
+          // Create table header
+          var thead = document.createElement('thead');
+          var headerRow = document.createElement('tr');
+          for (var headerCell of jsonData[0]) {
+            var th = document.createElement('th');
+            th.appendChild(document.createTextNode(headerCell));
+            headerRow.appendChild(th);
+          }
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+
+          // Create table body
+          var tbody = document.createElement('tbody');
+          for (var i = 1; i < jsonData.length; i++) {
+            var dataRow = document.createElement('tr');
+            for (var j = 0; j < jsonData[i].length; j++) {
+              var dataCell = jsonData[i][j];
+              var td = document.createElement('td');
+              if (worksheet['!ref']) {
+                var cellRef = XLSX.utils.encode_cell({ r: i, c: j });
+                var cell = worksheet[cellRef];
+                if (cell && cell.t === 'd' && typeof cell.v === 'number') {
+                  var dateValue = new Date(XLSX.SSF.parse_date_code(cell.v));
+                  var formattedDate = dateValue.toLocaleDateString('en-GB');
+                  td.appendChild(document.createTextNode(formattedDate));
+                } else {
+                  td.appendChild(document.createTextNode(dataCell));
+                }
+              } else {
+                td.appendChild(document.createTextNode(dataCell));
+              }
+              dataRow.appendChild(td);
+            }
+            if (i % 2 === 0) {
+              dataRow.classList.add('even-row');
+            }
+            tbody.appendChild(dataRow);
+          }
+          table.appendChild(tbody);
+
+          // Append table to the container
+          tableContainer.appendChild(table);
+
+          // Perform duplicate check
+          var duplicateRecords = [];
+          var uniqueRecords = new Set();
+          for (var i = 1; i < jsonData.length; i++) {
+            var rowData = jsonData[i].join(',');
+            if (uniqueRecords.has(rowData)) {
+              duplicateRecords.push(jsonData[i]);
+            } else {
+              uniqueRecords.add(rowData);
+            }
+          }
+
+          // Show/hide submit button based on duplicates
+          var submitBtn = document.getElementById('submitBtn');
+          if (duplicateRecords.length === 0) {
+            jsonDataToSend = JSON.stringify(jsonData.slice(1));
+            submitBtn.style.display = 'inline';
+          } else {
+            jsonDataToSend = null;
+            submitBtn.style.display = 'none';
+          }
+
+          // Show popup if duplicate records are found
+          if (duplicateRecords.length > 0) {
+            var message = 'Duplicate records found:<br><br>';
+            var tableHtml = '<table><thead><tr>';
+            for (var header of jsonData[0]) {
+              tableHtml += '<th>' + header + '</th>';
+            }
+            tableHtml += '</tr></thead><tbody>';
+            for (var record of duplicateRecords) {
+              tableHtml += '<tr>';
+              for (var cell of record) {
+                tableHtml += '<td>' + cell + '</td>';
+              }
+              tableHtml += '</tr>';
+            }
+            tableHtml += '</tbody></table>';
+            message += tableHtml;
+            swal({
+              title: 'Duplicate Records',
+              content: message,
+              icon: 'warning',
+              html: true
+            });
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    }
+
+    function handleSubmitClick() {
+      if (jsonDataToSend) {
+        $.ajax({
+          url: '/your-endpoint-url',
+          type: 'POST',
+          contentType: 'application/json',
+          data: jsonDataToSend,
+          success: function(response) {
+            // Handle the response from the server
+            console.log(response);
+          },
+          error: function(error) {
+            // Handle the error from the server
+            console.error(error);
+          }
+        });
+      }
+    }
+  </script>
+
+  <!-- Include the XLSX library -->
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+</body>
+</html>
