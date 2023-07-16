@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Excel Upload</title>
+  <style>
+    /* CSS styling for the table */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: left;
+    }
+    
+    th {
+      background-color: #f2f2f2;
+    }
+    
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>Upload Excel File</h1>
+  <form id="upload-form" enctype="multipart/form-data">
+    <input type="file" id="excel-upload" accept=".xlsx, .xls" />
+    <br /><br />
+    <input type="button" value="Process Excel" onclick="processExcel()" />
+    <input type="submit" value="Submit" />
+  </form>
+  
+  <br /><br />
+  <table id="excel-data">
+    <!-- Table will be dynamically populated with uploaded data -->
+  </table>
+  
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  <script>
+    var selectedColumns = ['column1', 'column2', 'status']; // Specify the columns to display here
+    
+    function processExcel() {
+      var fileInput = document.getElementById("excel-upload");
+      var file = fileInput.files[0];
+      var reader = new FileReader();
+
+      reader.onload = function(e) {
+        var data = new Uint8Array(e.target.result);
+        var workbook = XLSX.read(data, { type: 'array' });
+        var sheetName = workbook.SheetNames[0];
+        var worksheet = workbook.Sheets[sheetName];
+        var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        displayData(jsonData);
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function displayData(jsonData) {
+      var table = document.getElementById("excel-data");
+      table.innerHTML = "";
+
+      var thead = document.createElement("thead");
+      var headerRow = document.createElement("tr");
+
+      for (var i = 0; i < selectedColumns.length; i++) {
+        var headerCell = document.createElement("th");
+        headerCell.innerText = selectedColumns[i];
+        headerRow.appendChild(headerCell);
+      }
+
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      var tbody = document.createElement("tbody");
+
+      for (var i = 0; i < jsonData.length; i++) {
+        var dataRow = document.createElement("tr");
+
+        for (var j = 0; j < selectedColumns.length; j++) {
+          var dataCell = document.createElement("td");
+          
+          if (selectedColumns[j] === 'status') {
+            // Retrieve the real-time status from the Spring controller
+            getStatus(i, function(status) {
+              dataCell.innerText = status;
+            });
+          } else {
+            dataCell.innerText = jsonData[i][selectedColumns[j]];
+          }
+          
+          dataRow.appendChild(dataCell);
+        }
+
+        tbody.appendChild(dataRow);
+      }
+
+      table.appendChild(tbody);
+    }
+    
+    function getStatus(rowIdx, callback) {
+      fetch("/your-spring-controller-status-endpoint?rowIdx=" + rowIdx)
+        .then(response => response.text())
+        .then(status => {
+          callback(status);
+        })
+        .catch(error => {
+          console.error(error);
+          callback("Error");
+        });
+    }
+    
+    document.getElementById("upload-form").addEventListener("submit", function(event) {
+      event.preventDefault();
+      
+      var fileInput = document.getElementById("excel-upload");
+      var file = fileInput.files[0];
+      var formData = new FormData();
+      formData.append("file", file);
+      
+      fetch("/your-spring-controller-endpoint", {
+        method: "POST",
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Handle the response from the Spring controller
+        console.log(data);
+      })
+      .catch(error => {
+        // Handle any errors that occurred during the request
+        console.error(error);
+      });
+    });
+  </script>
+</body>
+</html>
