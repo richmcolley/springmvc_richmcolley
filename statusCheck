@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-time Status Updates</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Real-time Status Updates</h1>
+    <div>
+        <label for="excel-file">Upload Excel File:</label>
+        <input type="file" id="excel-file">
+    </div>
+    <div>
+        <label for="columns">Columns to Display:</label>
+        <select id="columns" multiple>
+            <!-- Add options for each column -->
+        </select>
+    </div>
+    <div>
+        <button id="upload-btn">Upload and Display Data</button>
+    </div>
+    <div id="status-container"></div>
+
+    <script>
+        $(document).ready(function() {
+            // Function to fetch status updates
+            function fetchStatusUpdates() {
+                $.ajax({
+                    url: "/status", // The URL to the server-side controller method
+                    type: "GET",
+                    dataType: "json",
+                    success: function(response) {
+                        updateStatusUI(response); // Function to update the UI with status updates
+                    },
+                    error: function(error) {
+                        console.error("Error fetching status updates:", error);
+                    }
+                });
+            }
+
+            // Function to update the UI with status updates
+            function updateStatusUI(statusUpdates) {
+                var statusContainer = $("#status-container");
+                statusContainer.empty(); // Clear the container
+
+                // Iterate through status updates and append them to the container
+                for (var i = 0; i < statusUpdates.length; i++) {
+                    var status = statusUpdates[i];
+                    var statusText = "File: " + status.fileName + " - Status: " + status.status;
+                    statusContainer.append("<p>" + statusText + "</p>");
+                }
+            }
+
+            // Function to handle the upload and display data functionality
+            function uploadAndDisplayData() {
+                var fileInput = $("#excel-file")[0];
+                var selectedColumns = $("#columns").val();
+
+                var formData = new FormData();
+                formData.append("file", fileInput.files[0]);
+                formData.append("columns", JSON.stringify(selectedColumns));
+
+                $.ajax({
+                    url: "/upload", // The URL to the server-side upload endpoint
+                    type: "POST",
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(response) {
+                        console.log("Upload and display successful:", response);
+                        // Handle the response and display the data
+                    },
+                    error: function(error) {
+                        console.error("Error uploading and displaying data:", error);
+                    }
+                });
+            }
+
+            // Fetch status updates every 5 seconds
+            setInterval(fetchStatusUpdates, 5000);
+
+            // Bind the click event of the upload button to the uploadAndDisplayData function
+            $("#upload-btn").click(uploadAndDisplayData);
+        });
+    </script>
+</body>
+</html>
+
+
+---------------------------
+
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.List;
+
+@Controller
+public class StatusController {
+    // Your JSON file generation service or component
+    private JSONFileGenerator fileGenerator;
+
+    public StatusController(JSONFileGenerator fileGenerator) {
+        this.fileGenerator = fileGenerator;
+    }
+
+    @GetMapping("/status")
+    @ResponseBody
+    public List<StatusUpdate> getStatusUpdates() {
+        return fileGenerator.getStatusUpdates(); // Retrieve the status updates from the generator
+    }
+
+    @PostMapping("/upload")
+    @ResponseBody
+    public List<DataRow> uploadAndDisplayData(@RequestParam("file") MultipartFile file,
+                                              @RequestParam("columns") String columnsJson) throws IOException {
+        // Process the uploaded file, extract data, and filter based on selected columns
+        List<DataRow> filteredData = processData(file, columnsJson);
+
+        // Return the filtered data to the client-side
+        return filteredData;
+    }
+
+    // Helper method to process the uploaded file, extract data, and filter based on selected columns
+    private List<DataRow> processData(MultipartFile file, String columnsJson) throws IOException {
+        // Implement the logic to read the Excel file, extract data, and filter based on selected columns
+        // Return the filtered data as a list of DataRow objects
+    }
+}
+
