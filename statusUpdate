@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Excel Upload</title>
+    <style>
+        /* Add some basic styling */
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .file-name {
+            margin-left: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .status-success {
+            color: green;
+        }
+
+        .status-failed {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Excel Upload</h2>
+    <form id="upload-form">
+        <div class="form-group">
+            <label for="file-upload" class="file-label">Choose Excel File</label>
+            <input type="file" id="file-upload" class="file-input" accept=".xlsx, .xls">
+            <span id="file-name"></span>
+        </div>
+        <button type="submit" class="btn">Upload</button>
+    </form>
+    <table id="data-table">
+        <thead>
+        <tr>
+            <th>Column 1</th>
+            <th>Column 2</th>
+            <th>Column 3</th>
+            <th>Column 4</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    // Get references to the elements
+    const form = document.getElementById('upload-form');
+    const fileInput = document.getElementById('file-upload');
+    const fileNameLabel = document.getElementById('file-name');
+    const dataTableBody = document.querySelector('#data-table tbody');
+
+    // Listen for file selection
+    fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (file) {
+            fileNameLabel.textContent = file.name;
+        } else {
+            fileNameLabel.textContent = '';
+        }
+    });
+
+    // Listen for form submission
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const file = fileInput.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+
+                // Clear existing table rows
+                dataTableBody.innerHTML = '';
+
+                // Iterate over the rows and display the first 4 columns
+                for (let i = 0; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    const rowData = row.slice(0, 4);
+                    const newRow = document.createElement('tr');
+
+                    for (let j = 0; j < rowData.length; j++) {
+                        const cellData = rowData[j];
+                        const newCell = document.createElement('td');
+                        newCell.textContent = cellData;
+                        newRow.appendChild(newCell);
+                    }
+
+                    // Create status column
+                    const statusCell = document.createElement('td');
+                    statusCell.textContent = 'Processing...';
+                    newRow.appendChild(statusCell);
+
+                    dataTableBody.appendChild(newRow);
+
+                    // Send each row to the Spring controller via AJAX
+                    sendDataToController(rowData, statusCell);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    });
+
+    // Function to send data to the Spring controller
+    function sendDataToController(data, statusCell) {
+        // Modify the URL and data according to your setup
+        const url = '/process-row';
+        const requestData = {row: data};
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(result => {
+            // Update status cell based on the response
+            if (result.success) {
+                statusCell.textContent = 'Success';
+                statusCell.classList.add('status-success');
+            } else {
+                statusCell.textContent = 'Failed';
+                statusCell.classList.add('status-failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            statusCell.textContent = 'Failed';
+            statusCell.classList.add('status-failed');
+        });
+    }
+</script>
+</body>
+</html>
+------------------------------------------------------------------------------------------------------------
+
+@PostMapping("/process-row")
+public ResponseEntity<Map<String, Object>> processRow(@RequestBody List<String> row) {
+    // Handle the row data as needed
+    System.out.println(row);
+
+    // Simulate processing and return response
+    boolean success = /* Perform processing and check if successful */ true;
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("success", success);
+    return ResponseEntity.ok(response);
+}
