@@ -1,0 +1,36 @@
+// Create table body
+var tbody = document.createElement('tbody');
+for (var i = 1; i < jsonData.length; i++) {
+  var dataRow = document.createElement('tr');
+  for (var j = 0; j < jsonData[i].length; j++) {
+    var dataCell = jsonData[i][j];
+    var td = document.createElement('td');
+    if (worksheet['!ref']) {
+      var cellRef = XLSX.utils.encode_cell({ r: i, c: j });
+      var cell = worksheet[cellRef];
+      if (cell && cell.t === 'd' && typeof cell.v === 'number') {
+        var excelDate = cell.v;
+        var dateValue = new Date((excelDate - (25567 + 1)) * 86400 * 1000);
+        var formattedDate = formatDate(dateValue);
+        td.appendChild(document.createTextNode(formattedDate));
+      } else {
+        td.appendChild(document.createTextNode(dataCell));
+      }
+    } else {
+      td.appendChild(document.createTextNode(dataCell));
+    }
+    dataRow.appendChild(td);
+  }
+  if (i % 2 === 0) {
+    dataRow.classList.add('even-row');
+  }
+  tbody.appendChild(dataRow);
+}
+table.appendChild(tbody);
+
+function formatDate(date) {
+  var day = date.getDate();
+  var month = date.getMonth() + 1;
+  var year = date.getFullYear();
+  return (day < 10 ? '0' + day : day) + '-' + (month < 10 ? '0' + month : month) + '-' + year;
+}
