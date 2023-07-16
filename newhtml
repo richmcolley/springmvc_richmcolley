@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login Page</title>
+  <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+  <div class="navbar">
+    <a href="#">Home</a>
+    <a href="#">Upload Excel</a>
+  </div>
+
+  <div class="container">
+    <h2>Login</h2>
+    <form action="upload.html" method="post">
+      <label for="username">Username:</label>
+      <input type="text" id="username" name="username" required><br>
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required><br>
+
+      <input type="submit" value="Login">
+    </form>
+  </div>
+</body>
+</html>
+---------------------------------------------
+
+body {
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  margin: 20px;
+}
+
+h2 {
+  margin-bottom: 10px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="file"] {
+  margin-bottom: 10px;
+}
+
+.navbar {
+  background-color: #333;
+  color: #fff;
+  padding: 10px;
+}
+
+.navbar a {
+  color: #fff;
+  text-decoration: none;
+  margin-right: 10px;
+}
+-----------------------------------
+
+function uploadExcel() {
+  var fileInput = document.getElementById('excelFile');
+  var file = fileInput.files[0];
+
+  var reader = new FileReader();
+
+  reader.onload = function(e) {
+    var data = new Uint8Array(e.target.result);
+    var workbook = XLSX.read(data, { type: 'array' });
+    var worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    displayData(jsonData);
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+function displayData(jsonData) {
+  var table = document.getElementById('dataTable');
+  var tbody = document.getElementById('dataBody');
+
+  // Clear previous data
+  tbody.innerHTML = '';
+
+  for (var i = 1; i < jsonData.length; i++) {
+    var row = document.createElement('tr');
+    for (var j = 0; j < jsonData[i].length; j++) {
+      var cell = document.createElement(i === 1 ? 'th' : 'td');
+      cell.textContent = jsonData[i][j];
+      row.appendChild(cell);
+    }
+    tbody.appendChild(row);
+  }
+
+  var tableContainer = document.getElementById('tableContainer');
+  tableContainer.style.display = 'block';
+}
+
+function validateAndSubmit() {
+  var table = document.getElementById('dataTable');
+  var rows = table.getElementsByTagName('tr');
+  var data = [];
+
+  // Get data from table rows
+  for (var i = 1; i < rows.length; i++) {
+    var rowData = [];
+    var cells = rows[i].getElementsByTagName('td');
+    for (var j = 0; j < cells.length; j++) {
+      rowData.push(cells[j].textContent);
+    }
+    data.push(rowData);
+  }
+
+  // Perform duplicate record validation
+  var duplicateIndices = findDuplicateIndices(data);
+
+  if (duplicateIndices.length > 0) {
+    var duplicateMessage = document.getElementById('duplicateMessage');
+    duplicateMessage.style.display = 'block';
+    return;
+  }
+
+  // Proceed to submit the form to the Spring MVC controller
+  var uploadForm = document.getElementById('uploadForm');
+  uploadForm.submit();
+}
+
+function findDuplicateIndices(data) {
+  var indices = [];
+
+  for (var i = 0; i < data.length; i++) {
+    for (var j = i + 1; j < data.length; j++) {
+      if (arraysEqual(data[i], data[j])) {
+        indices.push(j);
+      }
+    }
+  }
+
+  return indices;
+}
+
+function arraysEqual(arr1, arr2) {
+  if (arr1.length !== arr2.length) {
+    return false;
+  }
+
+  for (var i = 0; i < arr1.length; i++) {
+    if (arr1[i] !== arr2[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+--------------------------------------------
+
+<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
+-----------------
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload Excel</title>
+  <link rel="stylesheet" type="text/css" href="styles.css">
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  <script>
+    function uploadExcel() {
+      var fileInput = document.getElementById('excelFile');
+      var file = fileInput.files[0];
+
+      var reader = new FileReader();
+
+      reader.onload = function(e) {
+        var data = new Uint8Array(e.target.result);
+        var workbook = XLSX.read(data, { type: 'array' });
+        var worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        displayData(jsonData);
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function displayData(jsonData) {
+      var table = document.getElementById('dataTable');
+      var tbody = document.getElementById('dataBody');
+
+      // Clear previous data
+      tbody.innerHTML = '';
+
+      for (var i = 1; i < jsonData.length; i++) {
+        var row = document.createElement('tr');
+        for (var j = 0; j < jsonData[i].length; j++) {
+          var cell = document.createElement(i === 1 ? 'th' : 'td');
+          cell.textContent = jsonData[i][j];
+          row.appendChild(cell);
+        }
+        tbody.appendChild(row);
+      }
+
+      var tableContainer = document.getElementById('tableContainer');
+      tableContainer.style.display = 'block';
+    }
+
+    function validateAndSubmit() {
+      var table = document.getElementById('dataTable');
+      var rows = table.getElementsByTagName('tr');
+      var data = [];
+
+      // Get data from table rows
+      for (var i = 1; i < rows.length; i++) {
+        var rowData = [];
+        var cells = rows[i].getElementsByTagName('td');
+        for (var j = 0; j < cells.length; j++) {
+          rowData.push(cells[j].textContent);
+        }
+        data.push(rowData);
+      }
+
+      // Perform duplicate record validation
+      var duplicateIndices = findDuplicateIndices(data);
+
+      if (duplicateIndices.length > 0) {
+        var duplicateMessage = document.getElementById('duplicateMessage');
+        duplicateMessage.style.display = 'block';
+        return;
+      }
+
+      // Proceed to submit the form to the Spring MVC controller
+      var uploadForm = document.getElementById('uploadForm');
+      uploadForm.submit();
+    }
+
+    function findDuplicateIndices(data) {
+      var indices = [];
+
+      for (var i = 0; i < data.length; i++) {
+        for (var j = i + 1; j < data.length; j++) {
+          if (arraysEqual(data[i], data[j])) {
+            indices.push(j);
+          }
+        }
+      }
+
+      return indices;
+    }
+
+    function arraysEqual(arr1, arr2) {
+      if (arr1.length !== arr2.length) {
+        return false;
+      }
+
+      for (var i = 0; i < arr1.length; i++) {
+        if (arr1[i] !== arr2[i]) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      margin: 20px;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input[type="file"] {
+      margin-bottom: 10px;
+    }
+
+    .navbar {
+      background-color: #333;
+      color: #fff;
+      padding: 10px;
+    }
+
+    .navbar a {
+      color: #fff;
+      text-decoration: none;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <a href="#">Home</a>
+    <a href="#">Upload Excel</a>
+  </div>
+
+  <div class="container">
+    <h2>Upload Excel</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+      <input type="file" id="excelFile" required><br>
+      <input type="button" value="Upload" onclick="uploadExcel()">
+    </form>
+
+    <div id="tableContainer" style="display: none;">
+      <h3>Uploaded Data</h3>
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Column 1</th>
+            <th>Column 2</th>
+            <!-- Add more columns here -->
+          </tr>
+        </thead>
+        <tbody id="dataBody">
+          <!-- Data rows will be dynamically added here -->
+        </tbody>
+      </table>
+
+      <div id="duplicateMessage" style="display: none;">
+        <p>Duplicate records found!</p>
+      </div>
+
+      <input type="button" value="Proceed to Controller" onclick="validateAndSubmit()">
+    </div>
+  </div>
+</body>
+</html>
