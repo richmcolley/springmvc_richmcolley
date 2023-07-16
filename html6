@@ -28,6 +28,11 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            transition: background-color 0.3s ease-in-out;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
         }
 
         .file-input {
@@ -75,7 +80,7 @@
             <input type="file" id="file-upload" class="file-input" accept=".xlsx, .xls" onchange="handleFileSelection(event)">
             <span id="file-name"></span>
         </div>
-        <button type="submit" id="upload-button" class="btn" disabled>Upload</button>
+        <button type="button" id="upload-button" class="btn" disabled>Upload</button>
     </form>
     <table id="data-table">
         <thead>
@@ -149,9 +154,8 @@
         reader.readAsArrayBuffer(file);
     }
 
-    // Listen for form submission
-    document.getElementById('upload-form').addEventListener('submit', (e) => {
-        e.preventDefault();
+    // Listen for button click
+    uploadButton.addEventListener('click', function () {
         const file = fileInput.files[0];
         if (file) {
             const reader = new FileReader();
