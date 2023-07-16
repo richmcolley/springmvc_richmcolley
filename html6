@@ -80,7 +80,7 @@
             <input type="file" id="file-upload" class="file-input" accept=".xlsx, .xls" onchange="handleFileSelection(event)">
             <span id="file-name"></span>
         </div>
-        <button type="button" id="upload-button" class="btn" disabled>Upload</button>
+        <button type="button" id="upload-button" class="btn">Upload</button>
     </form>
     <table id="data-table">
         <thead>
@@ -108,11 +108,9 @@
         const file = event.target.files[0];
         if (file) {
             fileNameLabel.textContent = file.name;
-            uploadButton.disabled = false;
             displayDataFromFile(file);
         } else {
             fileNameLabel.textContent = '';
-            uploadButton.disabled = true;
             dataTableBody.innerHTML = '';
         }
     }
