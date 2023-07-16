@@ -338,3 +338,35 @@ function arraysEqual(arr1, arr2) {
   </div>
 </body>
 </html>
+
+---------------------
+
+function displayData(jsonData) {
+  var table = document.getElementById('dataTable');
+  var tbody = document.getElementById('dataBody');
+
+  // Clear previous data
+  tbody.innerHTML = '';
+
+  // Create table header
+  var headers = jsonData[0];
+  var headerRow = document.createElement('tr');
+  for (var i = 0; i < headers.length; i++) {
+    var th = document.createElement('th');
+    th.textContent = headers[i];
+    headerRow.appendChild(th);
+  }
+  tbody.appendChild(headerRow);
+
+  // Create table rows
+  for (var j = 1; j < jsonData.length; j++) {
+    var row = document.createElement('tr');
+    for (var k = 0; k < jsonData[j].length; k++) {
+      var cell = document.createElement('td');
+      cell.textContent = jsonData[j][k];
+      row.appendChild(cell);
+    }
+    tbody.appendChild(row);
+  }
+
+ 
