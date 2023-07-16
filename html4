@@ -10,7 +10,7 @@ for (var i = 1; i < jsonData.length; i++) {
       var cell = worksheet[cellRef];
       if (cell && cell.t === 'd' && typeof cell.v === 'number') {
         var excelDate = cell.v;
-        var dateValue = new Date((excelDate - (25567 + 1)) * 86400 * 1000);
+        var dateValue = new Date((excelDate - (25567 + 1)) * 86400000);
         var formattedDate = formatDate(dateValue);
         td.appendChild(document.createTextNode(formattedDate));
       } else {
