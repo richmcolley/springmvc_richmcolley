@@ -40,7 +40,7 @@
   
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
   <script>
-    var selectedColumns = ['column1', 'column2', 'status']; // Specify the columns to display here
+    var selectedColumns = ['Column1', 'Column2', 'Status']; // Specify the columns to display here
     
     function processExcel() {
       var fileInput = document.getElementById("excel-upload");
@@ -83,16 +83,19 @@
 
         for (var j = 0; j < selectedColumns.length; j++) {
           var dataCell = document.createElement("td");
-          
-          if (selectedColumns[j] === 'status') {
+
+          if (selectedColumns[j] === 'Status') {
+            // Create a placeholder for the real-time status
+            var statusCell = document.createElement("span");
+            statusCell.innerText = "Processing...";
+            dataCell.appendChild(statusCell);
+
             // Retrieve the real-time status from the Spring controller
-            getStatus(i, function(status) {
-              dataCell.innerText = status;
-            });
+            getStatus(i, statusCell);
           } else {
             dataCell.innerText = jsonData[i][selectedColumns[j]];
           }
-          
+
           dataRow.appendChild(dataCell);
         }
 
@@ -101,27 +104,32 @@
 
       table.appendChild(tbody);
     }
-    
-    function getStatus(rowIdx, callback) {
-      fetch("/your-spring-controller-status-endpoint?rowIdx=" + rowIdx)
-        .then(response => response.text())
-        .then(status => {
-          callback(status);
-        })
-        .catch(error => {
-          console.error(error);
-          callback("Error");
-        });
+
+    function getStatus(rowIdx, statusCell) {
+      setInterval(function() {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200) {
+              statusCell.innerText = xhr.responseText;
+            } else {
+              statusCell.innerText = "Error";
+            }
+          }
+        };
+        xhr.open("GET", "/your-spring-controller-status-endpoint?rowIdx=" + rowIdx, true);
+        xhr.send();
+      }, 2000);
     }
-    
+
     document.getElementById("upload-form").addEventListener("submit", function(event) {
       event.preventDefault();
-      
+
       var fileInput = document.getElementById("excel-upload");
       var file = fileInput.files[0];
       var formData = new FormData();
       formData.append("file", file);
-      
+
       fetch("/your-spring-controller-endpoint", {
         method: "POST",
         body: formData
@@ -139,3 +147,42 @@
   </script>
 </body>
 </html>
+---------------------------------------------
+
+@RestController
+public class StatusController {
+
+    private List<String> statusList = new ArrayList<>(); // List to store status values for each row
+
+    @GetMapping("/your-spring-controller-status-endpoint")
+    public ResponseEntity<String> getStatus(@RequestParam("rowIdx") int rowIdx) {
+        if (rowIdx >= 0 && rowIdx < statusList.size()) {
+            String status = statusList.get(rowIdx);
+
+            return ResponseEntity.ok(status);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Method to simulate processing and updating the status
+    private void updateStatusForRows() {
+        // Simulate processing and updating the status for each row
+        for (int i = 0; i < /*totalRows*/; i++) {
+            // Perform necessary logic to update the status for each row
+            
+            // Here, we'll use a placeholder value "Completed" as an example
+            statusList.add("Completed");
+        }
+    }
+
+    @PostMapping("/your-spring-controller-endpoint")
+    public ResponseEntity<String> processExcel(@RequestParam("file") MultipartFile file) {
+        // Process the uploaded Excel file and create JSON files
+        
+        // Call the method to update the status for each row
+        updateStatusForRows();
+        
+        return ResponseEntity.ok("File processed successfully");
+    }
+}
