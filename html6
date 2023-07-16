@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Excel Upload</title>
+    <style>
+        /* Add some basic styling */
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .file-name {
+            margin-left: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .status-success {
+            color: green;
+        }
+
+        .status-failed {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Excel Upload</h2>
+    <form id="upload-form">
+        <div class="form-group">
+            <label for="file-upload" class="file-label">Choose Excel File</label>
+            <input type="file" id="file-upload" class="file-input" accept=".xlsx, .xls" onchange="handleFileSelection(event)">
+            <span id="file-name"></span>
+        </div>
+        <button type="submit" id="upload-button" class="btn" disabled>Upload</button>
+    </form>
+    <table id="data-table">
+        <thead>
+        <tr>
+            <th>Column 1</th>
+            <th>Column 2</th>
+            <th>Column 3</th>
+            <th>Column 4</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    // Get references to the elements
+    const fileInput = document.getElementById('file-upload');
+    const fileNameLabel = document.getElementById('file-name');
+    const uploadButton = document.getElementById('upload-button');
+    const dataTableBody = document.querySelector('#data-table tbody');
+
+    // Function to handle file selection
+    function handleFileSelection(event) {
+        const file = event.target.files[0];
+        if (file) {
+            fileNameLabel.textContent = file.name;
+            uploadButton.disabled = false;
+            displayDataFromFile(file);
+        } else {
+            fileNameLabel.textContent = '';
+            uploadButton.disabled = true;
+            dataTableBody.innerHTML = '';
+        }
+    }
+
+    // Function to display data from the file
+    function displayDataFromFile(file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+
+            // Clear existing table rows
+            dataTableBody.innerHTML = '';
+
+            // Iterate over the rows and display the first 4 columns
+            for (let i = 0; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                const rowData = row.slice(0, 4);
+                const newRow = document.createElement('tr');
+
+                for (let j = 0; j < rowData.length; j++) {
+                    const cellData = rowData[j];
+                    const newCell = document.createElement('td');
+                    newCell.textContent = cellData;
+                    newRow.appendChild(newCell);
+                }
+
+                // Create status column
+                const statusCell = document.createElement('td');
+                statusCell.textContent = 'Processing...';
+                newRow.appendChild(statusCell);
+
+                dataTableBody.appendChild(newRow);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // Listen for form submission
+    document.getElementById('upload-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const file = fileInput.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+
+                // Send each row to the Spring controller via AJAX
+                for (let i = 0; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    const rowData = row.slice(0, 4);
+                    const statusCell = dataTableBody.rows[i].cells[4];
+                    sendDataToController(rowData, statusCell);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    });
+
+    // Function to send data to the Spring controller
+    function sendDataToController(data, statusCell) {
+        // Modify the URL and data according to your setup
+        const url = '/process-row';
+        const requestData = {row: data};
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(result => {
+            // Update status cell based on the response
+            if (result.success) {
+                statusCell.textContent = 'Success';
+                statusCell.classList.add('status-success');
+            } else {
+                statusCell.textContent = 'Failed';
+                statusCell.classList.add('status-failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            statusCell.textContent = 'Failed';
+            statusCell.classList.add('status-failed');
+        });
+    }
+</script>
+</body>
+</html>
