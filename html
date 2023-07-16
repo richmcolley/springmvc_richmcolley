@@ -1,0 +1,602 @@
+<div id="navigation">
+  <ul>
+    <li><a href="index.html">Page 1</a></li>
+    <li><a href="page2.html">Page 2</a></li>
+  </ul>
+</div>
+
+--------------------------------------
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Page 1</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    #navigation {
+      background-color: #333;
+      color: #fff;
+      padding: 10px;
+    }
+    #navigation ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #navigation li {
+      display: inline;
+    }
+    #navigation a {
+      color: #fff;
+      text-decoration: none;
+      padding: 10px;
+    }
+    #navigation a:hover {
+      background-color: #555;
+    }
+    #content {
+      margin: 20px;
+    }
+    #upload-form label {
+      display: block;
+      margin-bottom: 10px;
+    }
+    #upload-form input[type="file"] {
+      margin-bottom: 10px;
+    }
+    #upload-form input[type="submit"] {
+      display: none;
+      margin-top: 10px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    tr:hover {
+      background-color: #ddd;
+    }
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #fff;
+      padding: 20px;
+      border: 1px solid #ccc;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      display: none;
+      z-index: 9999;
+    }
+    .popup-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .popup-message {
+      margin-bottom: 10px;
+    }
+    .popup-buttons {
+      display: flex;
+      justify-content: center;
+    }
+    .popup-button {
+      margin: 0 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="navigation">
+    <ul>
+      <li><a href="index.html">Page 1</a></li>
+      <li><a href="page2.html">Page 2</a></li>
+    </ul>
+  </div>
+  <div id="content">
+    <h1>Page 1</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+      <label for="file">Upload Excel:</label>
+      <input type="file" id="file" name="file">
+      <input type="submit" value="Submit" id="submit-button">
+    </form>
+
+    <h2>Data Display:</h2>
+    <table id="data-table">
+      <tr>
+        <th>Name</th>
+        <th>Age</th>
+        <th>Email</th>
+      </tr>
+      <tr>
+        <td>John Doe</td>
+        <td>25</td>
+        <td>john@example.com</td>
+      </tr>
+      <tr>
+        <td>Jane Smith</td>
+        <td>30</td>
+        <td>jane@example.com</td>
+      </tr>
+    </table>
+
+    <div id="popup" class="popup">
+      <div class="popup-content">
+        <div class="popup-message"></div>
+        <div class="popup-buttons">
+          <button class="popup-button" onclick="hidePopup()">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Show submit button when a file is selected
+    document.getElementById('file').addEventListener('change', function () {
+      document.getElementById('submit-button').style.display = 'inline';
+    });
+
+    // Function to check for duplicate data in the table
+    function checkDuplicateData() {
+      const table = document.getElementById('data-table');
+      const rows = table.getElementsByTagName('tr');
+      const data = new Set();
+      let hasDuplicates = false;
+
+      // Skip the table header row (index 0)
+      for (let i = 1; i < rows.length; i++) {
+        const rowData = Array.from(rows[i].getElementsByTagName('td')).map(cell => cell.innerText).join('|');
+
+        if (data.has(rowData)) {
+          hasDuplicates = true;
+          break;
+        }
+
+        data.add(rowData);
+      }
+
+      return hasDuplicates;
+    }
+
+    // Function to display the popup with a message
+    function showPopup(message) {
+      const popup = document.getElementById('popup');
+      const popupMessage = document.querySelector('.popup-message');
+      popupMessage.textContent = message;
+      popup.style.display = 'block';
+    }
+
+    // Function to hide the popup
+    function hidePopup() {
+      const popup = document.getElementById('popup');
+      popup.style.display = 'none';
+    }
+
+    // Form submit event handler
+    document.getElementById('upload-form').addEventListener('submit', function (event) {
+      const hasDuplicates = checkDuplicateData();
+
+      if (hasDuplicates) {
+        event.preventDefault(); // Prevent form submission
+        showPopup('Duplicate data found in the table. Please remove duplicates before proceeding.');
+      }
+    });
+  </script>
+</body>
+</html>
+
+
+------------------------------------
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Page 2</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    #navigation {
+      background-color: #333;
+      color: #fff;
+      padding: 10px;
+    }
+    #navigation ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #navigation li {
+      display: inline;
+    }
+    #navigation a {
+      color: #fff;
+      text-decoration: none;
+      padding: 10px;
+    }
+    #navigation a:hover {
+      background-color: #555;
+    }
+    #content {
+      margin: 20px;
+    }
+    #upload-form label {
+      display: block;
+      margin-bottom: 10px;
+    }
+    #upload-form input[type="file"] {
+      margin-bottom: 10px;
+    }
+    #upload-form input[type="submit"] {
+      display: none;
+      margin-top: 10px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    tr:hover {
+      background-color: #ddd;
+    }
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #fff;
+      padding: 20px;
+      border: 1px solid #ccc;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      display: none;
+      z-index: 9999;
+    }
+    .popup-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .popup-message {
+      margin-bottom: 10px;
+    }
+    .popup-buttons {
+      display: flex;
+      justify-content: center;
+    }
+    .popup-button {
+      margin: 0 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="navigation">
+    <ul>
+      <li><a href="index.html">Page 1</a></li>
+      <li><a href="page2.html">Page 2</a></li>
+    </ul>
+  </div>
+  <div id="content">
+    <h1>Page 2</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+      <label for="file">Upload Excel:</label>
+      <input type="file" id="file" name="file">
+      <input type="submit" value="Submit" id="submit-button">
+    </form>
+
+    <h2>Data Display:</h2>
+    <table id="data-table">
+      <tr>
+        <th>Name</th>
+        <th>Age</th>
+        <th>Email</th>
+      </tr>
+      <tr>
+        <td>Michael Johnson</td>
+        <td>35</td>
+        <td>michael@example.com</td>
+      </tr>
+      <tr>
+        <td>Sarah Adams</td>
+        <td>28</td>
+        <td>sarah@example.com</td>
+      </tr>
+    </table>
+
+    <div id="popup" class="popup">
+      <div class="popup-content">
+        <div class="popup-message"></div>
+        <div class="popup-buttons">
+          <button class="popup-button" onclick="hidePopup()">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Show submit button when a file is selected
+    document.getElementById('file').addEventListener('change', function () {
+      document.getElementById('submit-button').style.display = 'inline';
+    });
+
+    // Function to check for duplicate data in the table
+    function checkDuplicateData() {
+      const table = document.getElementById('data-table');
+      const rows = table.getElementsByTagName('tr');
+      const data = new Set();
+      let hasDuplicates = false;
+
+      // Skip the table header row (index 0)
+      for (let i = 1; i < rows.length; i++) {
+        const rowData = Array.from(rows[i].getElementsByTagName('td')).map(cell => cell.innerText).join('|');
+
+        if (data.has(rowData)) {
+          hasDuplicates = true;
+          break;
+        }
+
+        data.add(rowData);
+      }
+
+      return hasDuplicates;
+    }
+
+    // Function to display the popup with a message
+    function showPopup(message) {
+      const popup = document.getElementById('popup');
+      const popupMessage = document.querySelector('.popup-message');
+      popupMessage.textContent = message;
+      popup.style.display = 'block';
+    }
+
+    // Function to hide the popup
+    function hidePopup() {
+      const popup = document.getElementById('popup');
+      popup.style.display = 'none';
+    }
+
+    // Form submit event handler
+    document.getElementById('upload-form').addEventListener('submit', function (event) {
+      const hasDuplicates = checkDuplicateData();
+
+      if (hasDuplicates) {
+        event.preventDefault(); // Prevent form submission
+        showPopup('Duplicate data found in the table. Please remove duplicates before proceeding.');
+      }
+    });
+  </script>
+</body>
+</html>
+
+--------------------------------
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    #login-form {
+      width: 300px;
+      margin: 100px auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      background-color: #f2f2f2;
+    }
+    #login-form label {
+      display: block;
+      margin-bottom: 10px;
+    }
+    #login-form input[type="text"],
+    #login-form input[type="password"] {
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+    #login-form input[type="submit"] {
+      background-color: #333;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+    }
+    #login-form input[type="submit"]:hover {
+      background-color: #555;
+    }
+    .error-message {
+      color: red;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <form id="login-form">
+    <h1>Login</h1>
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username">
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password">
+    <input type="submit" value="Login" id="login-button">
+    <div id="error-message" class="error-message"></div>
+  </form>
+
+  <script>
+    document.getElementById('login-form').addEventListener('submit', function (event) {
+      event.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorMessage = document.getElementById('error-message');
+
+      if (username === 'admin' && password === 'password') {
+        // Redirect to the home page on successful login
+        window.location.href = 'index.html';
+      } else {
+        // Show error message on failed login
+        errorMessage.textContent = 'Invalid username or password.';
+      }
+    });
+  </script>
+</body>
+</html>
+----------------------------------------
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Index</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    #content {
+      margin: 20px;
+    }
+    .login-page {
+      display: none;
+      text-align: center;
+    }
+    .home-page {
+      display: none;
+    }
+    .welcome-message {
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+    .logout-button {
+      padding: 5px 10px;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="content">
+    <div class="login-page">
+      <h1>Login</h1>
+      <form id="login-form">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password">
+        <input type="submit" value="Login">
+      </form>
+      <div id="login-error" style="color: red;"></div>
+    </div>
+    <div class="home-page">
+      <div class="welcome-message">
+        <h1>Welcome to the Home Page!</h1>
+        <button class="logout-button">Logout</button>
+      </div>
+      <h2>Data Display:</h2>
+      <table id="data-table">
+        <tr>
+          <th>Name</th>
+          <th>Age</th>
+          <th>Email</th>
+        </tr>
+        <tr>
+          <td>John Doe</td>
+          <td>25</td>
+          <td>john@example.com</td>
+        </tr>
+        <tr>
+          <td>Jane Smith</td>
+          <td>30</td>
+          <td>jane@example.com</td>
+        </tr>
+      </table>
+
+      <div id="popup" class="popup">
+        <div class="popup-content">
+          <div class="popup-message"></div>
+          <div class="popup-buttons">
+            <button class="popup-button" onclick="hidePopup()">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const loginPage = document.querySelector('.login-page');
+    const homePage = document.querySelector('.home-page');
+    const loginForm = document.getElementById('login-form');
+    const loginError = document.getElementById('login-error');
+    const logoutButton = document.querySelector('.logout-button');
+
+    loginForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      if (username === 'admin' && password === 'password') {
+        showHomePage();
+      } else {
+        loginError.textContent = 'Invalid username or password.';
+      }
+    });
+
+    logoutButton.addEventListener('click', function () {
+      showLoginPage();
+    });
+
+    function showLoginPage() {
+      loginPage.style.display = 'block';
+      homePage.style.display = 'none';
+    }
+
+    function showHomePage() {
+      loginPage.style.display = 'none';
+      homePage.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
+-----------------------------------
+
+
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+private boolean isLoggedIn() {
+  // Get the current request
+  ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+  HttpServletRequest request = attributes.getRequest();
+
+  // Check if the user is authenticated based on the session
+  HttpSession session = request.getSession(false);
+  return session != null && session.getAttribute("loggedInUser") != null;
+}
+
