@@ -1,3 +1,39 @@
+<dependencies>
+    <!-- Spring Boot Starter WebFlux -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency>
+    
+    <!-- Spring Boot Starter WebClient -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-webclient</artifactId>
+    </dependency>
+    
+    <!-- Reactor Core -->
+    <dependency>
+        <groupId>io.projectreactor</groupId>
+        <artifactId>reactor-core</artifactId>
+    </dependency>
+    
+    <!-- Reactor Netty (optional) -->
+    <dependency>
+        <groupId>io.projectreactor.netty</groupId>
+        <artifactId>reactor-netty</artifactId>
+    </dependency>
+    
+    <!-- Jackson JSON Processor -->
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+    </dependency>
+</dependencies>
+
+
+
+-------------------------------------------------------
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.BodyInserters;
