@@ -1,0 +1,50 @@
+import org.springframework.http.*;
+import org.springframework.web.client.RestTemplate;
+
+public class RestClient {
+
+    public static void main(String[] args) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("FIL-CHANNEL", "WEB");
+        headers.set("requestId", "12345");
+        headers.set("FIL-BUSINESS", "ADVISED");
+        headers.set("Authorization", "Basic d2ViYnzc3ashasdjfdso==");
+        headers.set("Content-Type", "application/json");
+
+        String url = "http://rereg-in-integration-service-uat.np3a.paas/reregistration-in/security/settlement";
+        String requestBody = "{\n" +
+                "    \"accountId\": \"test123\",\n" +
+                "    \"transactionId\": null,\n" +
+                "    \"assetDetail\": {\n" +
+                "        \"externalReference\": \"1234567890987\",\n" +
+                "        \"assetName\": null,\n" +
+                "        \"assetId\": {\n" +
+                "            \"type\": \"ISIN\",\n" +
+                "            \"value\": \"GB2435etdgfhjhd\"\n" +
+                "        },\n" +
+                "        \"group1Quantity\": {\n" +
+                "            \"value\": 3\n" +
+                "        },\n" +
+                "        \"group2Quantity\": {\n" +
+                "            \"value\": 0\n" +
+                "        }\n" +
+                "    },\n" +
+                "    \"security\": {\n" +
+                "        \"tradeDate\": \"2023-04-28\",\n" +
+                "        \"settlementDate\": \"2023-04-28\"\n" +
+                "    }\n" +
+                "}";
+
+        HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
+
+        HttpStatus statusCode = responseEntity.getStatusCode();
+        if (statusCode == HttpStatus.OK) {
+            String responseBody = responseEntity.getBody();
+            System.out.println("Response: " + responseBody);
+        } else {
+            System.out.println("Request failed with status code: " + statusCode);
+        }
+    }
+}
