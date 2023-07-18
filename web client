@@ -166,4 +166,61 @@ public class RestClient {
     }
 }
 
+----------------------------------------------
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
+
+import javax.net.ssl.SSLException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+
+public class RestClient {
+
+    public static void main(String[] args) throws NoSuchAlgorithmException, KeyManagementException, KeyStoreException, CertificateException, SSLException {
+        // Create the HttpClient instance
+        HttpClient httpClient = HttpClient.create()
+                .secure(sslContextSpec -> sslContextSpec.sslContext(getCustomSSLContext()))
+                .followRedirect(true);
+
+        // Create the WebClient instance with the custom HttpClient
+        WebClient webClient = WebClient.builder()
+                .baseUrl("http://rereg-in-integration-service-uat.np3a.paas")  // Update the base URL accordingly
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .build();
+
+        // Rest of the code remains the same
+        // ...
+    }
+
+    private static SSLContext getCustomSSLContext() throws NoSuchAlgorithmException, KeyStoreException, CertificateException {
+        // Load the custom certificate from file
+        InputStream certInputStream = Files.newInputStream(Path.of("/path/to/certificate.crt"));
+        X509Certificate certificate = (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(certInputStream);
+        certInputStream.close();
+
+        // Create a KeyStore and add the certificate to it
+        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        trustStore.load(null, null);
+        trustStore.setCertificateEntry("custom_cert", certificate);
+
+        // Create a custom SSL context with the KeyStore
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, trustStore.getCertificateChain("custom_cert"), null);
+
+        return sslContext;
+    }
+}
 
