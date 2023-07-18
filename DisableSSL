@@ -1,0 +1,63 @@
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.tcp.SslProvider;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+
+public class RestClient {
+
+    public static void main(String[] args) throws NoSuchAlgorithmException, KeyManagementException {
+        // Create a custom SSL context that bypasses SSL certificate verification
+        SSLContext sslContext = createCustomSSLContext();
+
+        // Create an SslProvider with the custom SSL context
+        SslProvider sslProvider = SslProvider.builder()
+                .sslContext(sslContext)
+                .defaultConfiguration(SslProvider.DefaultConfigurationType.NONE)
+                .build();
+
+        // Create the HttpClient instance with the custom SslProvider
+        HttpClient httpClient = HttpClient.create().secure(sslProviderSpec -> sslProviderSpec.sslContext(sslProvider));
+
+        // Create the WebClient instance with the custom HttpClient
+        WebClient webClient = WebClient.builder()
+                .baseUrl("http://rereg-in-integration-service-uat.np3a.paas")  // Update the base URL accordingly
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .build();
+
+        // Rest of the code remains the same
+        // ...
+    }
+
+    private static SSLContext createCustomSSLContext() throws NoSuchAlgorithmException, KeyManagementException {
+        // Create a trust manager that accepts all certificates
+        TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    }
+                }
+        };
+
+        // Create a custom SSL context with the trust manager
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, trustAllCerts, new SecureRandom());
+
+        return sslContext;
+    }
+}
