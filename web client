@@ -76,3 +76,94 @@ public class RestClient {
         }
     }
 }
+
+--------------------------------------------------------------------
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
+public class RestClient {
+
+    public static void main(String[] args) throws NoSuchAlgorithmException, KeyManagementException {
+        // Disable SSL certificate verification
+        disableSslVerification();
+
+        // Create the WebClient instance
+        WebClient webClient = WebClient.builder()
+                .baseUrl("http://rereg-in-integration-service-uat.np3a.paas")  // Update the base URL accordingly
+                .build();
+
+        // Set the request URL
+        String url = "/reregistration-in/security/settlement";
+
+        // Set the request headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("FIL-CHANNEL", "WEB");
+        headers.set("requestId", "12345");
+        headers.set("FIL-BUSINESS", "ADVISED");
+        headers.set("Authorization", "Basic d2ViYnzc3ashasdjfdso==");
+
+        // Set the request body
+        String requestBody = "{\"accountId\":\"test123\",\"transactionId\":null,\"assetDetail\":{\"externalReference\":\"1234567890987\",\"assetName\":null,\"assetId\":{\"type\":\"ISIN\",\"value\":\"GB2435etdgfhjhd\"},\"group1Quantity\":{\"value\":3},\"group2Quantity\":{\"value\":0}},\"security\":{\"tradeDate\":\"2023-04-28\",\"settlementDate\":\"2023-04-28\"}}";
+
+        // Send the POST request
+        String responseBody = webClient.post()
+                .uri(url)
+                .headers(httpHeaders -> httpHeaders.addAll(headers))
+                .body(BodyInserters.fromValue(requestBody))
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+
+        // Handle the response
+        if (responseBody != null) {
+            System.out.println("Request successful. Response body: " + responseBody);
+        } else {
+            System.err.println("Request failed. Response body is empty.");
+        }
+    }
+
+    private static void disableSslVerification() throws NoSuchAlgorithmException, KeyManagementException {
+        // Create a trust manager that accepts all certificates
+        TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    }
+                }
+        };
+
+        // Create an SSL context with the trust manager
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, trustAllCerts, new SecureRandom());
+
+        // Set the default SSL context to the custom SSL context
+        HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+
+        // Disable hostname verification
+        HostnameVerifier hostnameVerifier = (hostname, session) -> true;
+        HttpsURLConnection.setDefaultHostnameVerifier(hostnameVerifier);
+    }
+}
+
+
