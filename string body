@@ -59,3 +59,113 @@ requestBodyMap.put("security", securityMap);
 // Convert the map to a JSON string
 ObjectMapper objectMapper = new ObjectMapper();
 String requestBody = objectMapper.writeValueAsString(requestBodyMap);
+
+---------------------------------------------------------------------
+
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class WebClientExample {
+
+    public static void main(String[] args) {
+        HttpClient httpClient = HttpClient.create()
+                .secure(sslContextSpec -> sslContextSpec.sslContext(
+                        SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE)
+                ));
+
+        WebClient webClient = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                .defaultHeaders(header -> {
+                    header.setBasicAuth("username", "password");
+                    header.set("FIL-CHANNEL", "WEB");
+                    header.set("requestId", "12345");
+                    header.set("FIL-BUSINESS", "ADVISED");
+                })
+                .build();
+
+        List<Map<String, String>> requestDataList = new ArrayList<>();
+
+        // Add your multiple data here to requestDataList
+        Map<String, String> requestData1 = new HashMap<>();
+        requestData1.put("accountId", "test123");
+        requestData1.put("transactionId", null);
+        requestData1.put("externalReference", "1234567890987");
+        // Add more data...
+
+        requestDataList.add(requestData1);
+        // Add more data to requestDataList...
+
+        List<Map<String, String>> responseList = new ArrayList<>();
+
+        // Send requests in a loop
+        for (Map<String, String> requestData : requestDataList) {
+            String requestBody = buildRequestBody(requestData);
+
+            webClient.post()
+                    .uri("https://example.com/api/endpoint")
+                    .body(BodyInserters.fromValue(requestBody))
+                    .retrieve()
+                    .onStatus(HttpStatus::is2xxSuccessful, response -> {
+                        // Handle successful response
+                        Mono<String> responseBodyMono = response.bodyToMono(String.class);
+                        return responseBodyMono.flatMap(responseBody -> {
+                            Map<String, String> responseMap = new HashMap<>();
+                            responseMap.put("requestBody", requestBody);
+                            responseMap.put("responseBody", responseBody);
+                            responseList.add(responseMap);
+                            return Mono.empty();
+                        });
+                    })
+                    .onStatus(HttpStatus::is4xxClientError, response -> {
+                        // Handle 4xx client errors
+                        System.err.println("Client error. Status code: " + response.statusCode());
+                        return response.createException()
+                                .flatMap(error -> Mono.empty());
+                    })
+                    .onStatus(HttpStatus::is5xxServerError, response -> {
+                        // Handle 5xx server errors
+                        System.err.println("Server error. Status code: " + response.statusCode());
+                        return response.createException()
+                                .flatMap(error -> Mono.empty());
+                    })
+                    .bodyToMono(Void.class)
+                    .block();
+        }
+
+        // Print the responses
+        for (Map<String, String> responseMap : responseList) {
+            System.out.println("Request Body: " + responseMap.get("requestBody"));
+            System.out.println("Response Body: " + responseMap.get("responseBody"));
+            System.out.println("-----------------------------");
+        }
+    }
+
+    private static String buildRequestBody(Map<String, String> requestData) {
+        // Build the request body string based on the requestData map
+        // You can use a JSON library like Jackson or Gson to convert the map to a JSON string
+        // For simplicity, let's just use a simple concatenation for this example
+        StringBuilder requestBody = new StringBuilder("{");
+        for (Map.Entry<String, String> entry : requestData.entrySet()) {
+            requestBody.append("\"").append(entry.getKey()).append("\":\"").append(entry.getValue()).append("\",");
+        }
+        // Remove the trailing comma and add the closing brace
+        requestBody.setLength(requestBody.length() - 1);
+        requestBody.append("}");
+        return requestBody.toString();
+    }
+}
+
