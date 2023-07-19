@@ -1,0 +1,10 @@
+String accountId = "test123";
+String externalReference = "1234567890987";
+String assetIdType = "ISIN";
+String assetIdValue = "GB2435etdgfhjhd";
+int group1QuantityValue = 3;
+int group2QuantityValue = 0;
+String tradeDate = "2023-04-28";
+String settlementDate = "2023-04-28";
+
+String requestBody = "{\"accountId\":\"" + accountId + "\",\"transactionId\":null,\"assetDetail\":{\"externalReference\":\"" + externalReference + "\",\"assetName\":null,\"assetId\":{\"type\":\"" + assetIdType + "\",\"value\":\"" + assetIdValue + "\"},\"group1Quantity\":{\"value\":" + group1QuantityValue + "},\"group2Quantity\":{\"value\":" + group2QuantityValue + "}},\"security\":{\"tradeDate\":\"" + tradeDate + "\",\"settlementDate\":\"" + settlementDate + "\"}}";
