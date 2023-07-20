@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Page</title>
+  <style>
+    /* Basic CSS styling for the navigation and slider */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    header {
+      background-color: #333;
+      color: #fff;
+      padding: 10px;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      margin: 0 10px;
+    }
+
+    .slider {
+      width: 200px;
+      background-color: #f1f1f1;
+      position: fixed;
+      top: 0;
+      left: -200px;
+      height: 100%;
+      padding: 20px;
+      transition: left 0.3s;
+    }
+
+    .slider.open {
+      left: 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <div>
+        <a href="#">Home</a>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+      </div>
+      <button id="toggleSlider">Toggle Slider</button>
+    </nav>
+  </header>
+
+  <div class="slider" id="slider">
+    <!-- Add content to the slider here -->
+  </div>
+
+  <h1>Welcome to My Page!</h1>
+
+  <script>
+    // JavaScript to handle the slider toggle button
+    const slider = document.getElementById('slider');
+    const toggleButton = document.getElementById('toggleSlider');
+
+    toggleButton.addEventListener('click', () => {
+      slider.classList.toggle('open');
+    });
+  </script>
+</body>
+</html>
