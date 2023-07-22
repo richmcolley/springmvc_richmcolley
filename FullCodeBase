@@ -335,3 +335,82 @@ public class ExcelController {
         return "";
     }
 }
+
+
+
+// ------------------------------------------------------------------------
+
+Html Upload Excel
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload and Display Excel Data</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload and Display Excel Data</h1>
+    <form id="uploadForm">
+        <input type="file" id="fileInput" accept=".xlsx, .xls" />
+        <button type="submit">Upload</button>
+    </form>
+
+    <div id="tableContainer">
+        <!-- Table data will be displayed here -->
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const data = e.target.result;
+                    const workbook = XLSX.read(data, { type: 'binary' });
+
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+
+                    const excelData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    // Convert the excelData array to an HTML table
+                    const tableContainer = document.getElementById('tableContainer');
+                    const table = document.createElement('table');
+                    tableContainer.innerHTML = '';
+                    tableContainer.appendChild(table);
+
+                    excelData.forEach((row, rowIndex) => {
+                        const tr = document.createElement('tr');
+                        table.appendChild(tr);
+
+                        row.forEach((cellData, cellIndex) => {
+                            const cellElement = rowIndex === 0 ? 'th' : 'td';
+                            const cell = document.createElement(cellElement);
+                            cell.textContent = cellData;
+                            tr.appendChild(cell);
+                        });
+                    });
+                };
+                reader.readAsBinaryString(file);
+            }
+        });
+    </script>
+
+    <!-- Include the XLSX library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+</body>
+</html>
