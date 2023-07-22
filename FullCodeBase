@@ -1,0 +1,257 @@
+excel-to-json/
+├── src/
+│   └── main/
+│       └── java/
+│           └── com/
+│               └── example/
+│                   ├── controller/
+│                   │   └── ExcelToJsonController.java
+│                   ├── model/
+│                   │   ├── Asset.java
+│                   │   ├── Transaction.java
+│                   │   └── Pset.java
+│                   ├── service/
+│                   │   └── ExcelToJsonService.java
+│                   └── ExcelToJsonApplication.java
+└── pom.xml
+
+
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class Asset {
+    @JsonProperty("isin")
+    private String isin;
+
+    @JsonProperty("sed")
+    private String sed;
+
+    @JsonProperty("unit")
+    private String unit;
+
+    @JsonProperty("cR")
+    private String cR;
+
+    // Constructors, getters, and setters (omitted for brevity)
+}
+
+
+
+
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class Pset {
+    @JsonProperty("crest")
+    private Crest crest;
+
+    @JsonProperty("tradeDate")
+    private String tradeDate;
+
+    @JsonProperty("sDate")
+    private String sDate;
+
+    // Constructors, getters, and setters (omitted for brevity)
+
+    public static class Crest {
+        @JsonProperty("acquiring")
+        private Acquiring acquiring;
+
+        @JsonProperty("ceding")
+        private Ceding ceding;
+
+        // Constructors, getters, and setters (omitted for brevity)
+
+        public static class Acquiring {
+            @JsonProperty("id")
+            private String id;
+
+            // Constructors, getters, and setters (omitted for brevity)
+        }
+
+        public static class Ceding {
+            @JsonProperty("id")
+            private String id;
+
+            // Constructors, getters, and setters (omitted for brevity)
+        }
+    }
+}
+
+
+
+
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class Transaction {
+    @JsonProperty("accountId")
+    private String accountId;
+
+    @JsonProperty("externalReference")
+    private String externalReference;
+
+    @JsonProperty("transactionId")
+    private String transactionId;
+
+    @JsonProperty("transactionStatus")
+    private String transactionStatus;
+
+    @JsonProperty("transaction_type")
+    private String transactionType;
+
+    @JsonProperty("transactionmode")
+    private String transactionMode;
+
+    @JsonProperty("channel")
+    private String channel;
+
+    @JsonProperty("business")
+    private String business;
+
+    @JsonProperty("productType")
+    private String productType;
+
+    @JsonProperty("assets")
+    private Asset[] assets;
+
+    @JsonProperty("errors")
+    private String errors;
+
+    @JsonProperty("accountH")
+    private String accountH;
+
+    @JsonProperty("PSET")
+    private Pset pset;
+
+    // Constructors, getters, and setters (omitted for brevity)
+}
+
+
+
+
+import org.apache.poi.ss.usermodel.*;
+import org.springframework.stereotype.Service;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Iterator;
+
+@Service
+public class ExcelToJsonService {
+
+    public void convertExcelToJson(File inputFile, String outputDirectory) throws IOException {
+        Workbook workbook = WorkbookFactory.create(inputFile);
+        Sheet sheet = workbook.getSheetAt(0); // Assuming the data is in the first sheet
+
+        Iterator<Row> rowIterator = sheet.iterator();
+        int rowNumber = 0;
+
+        while (rowIterator.hasNext()) {
+            Row row = rowIterator.next();
+
+            if (rowNumber == 0) {
+                rowNumber++;
+                continue; // Skip header row
+            }
+
+            Transaction transaction = mapRowToTransaction(row);
+
+            String jsonFileName = outputDirectory + "/transaction_" + rowNumber + ".json";
+            saveTransactionAsJson(transaction, jsonFileName);
+
+            rowNumber++;
+        }
+
+        workbook.close();
+    }
+
+    private Transaction mapRowToTransaction(Row row) {
+        // Your code to map Excel row data to the Transaction object goes here
+        // Example:
+        Transaction transaction = new Transaction();
+        transaction.setAccountId(getStringCellValue(row.getCell(0)));
+        transaction.setExternalReference(getStringCellValue(row.getCell(1)));
+        // Map other fields
+
+        return transaction;
+    }
+
+    private String getStringCellValue(Cell cell) {
+        if (cell == null) {
+            return "";
+        }
+
+        cell.setCellType(CellType.STRING);
+        return cell.getStringCellValue();
+    }
+
+    private void saveTransactionAsJson(Transaction transaction, String jsonFileName) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonString = objectMapper.writeValueAsString(transaction);
+
+        try (FileOutputStream fileOutputStream = new FileOutputStream(jsonFileName)) {
+            fileOutputStream.write(jsonString.getBytes());
+        }
+    }
+}
+
+
+
+
+
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+
+@RestController
+public class ExcelToJsonController {
+
+    private final ExcelToJsonService excelToJsonService;
+
+    @Autowired
+    public ExcelToJsonController(ExcelToJsonService excelToJsonService) {
+        this.excelToJsonService = excelToJsonService;
+    }
+
+    @PostMapping("/convert")
+    public String convertExcelToJson(@RequestParam("file") MultipartFile file) {
+        try {
+            File inputFile = File.createTempFile("temp", ".xlsx");
+            file.transferTo(inputFile);
+
+            String outputDirectory = "path/to/output/directory"; // Replace with your desired output directory
+
+            excelToJsonService.convertExcelToJson(inputFile, outputDirectory);
+
+            return "Conversion successful. JSON files saved.";
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "Conversion failed. An error occurred.";
+        }
+    }
+}
+
+
+
+
+
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class ExcelToJsonApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ExcelToJsonApplication.class, args);
+    }
+}
