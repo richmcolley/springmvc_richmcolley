@@ -1,0 +1,138 @@
+rest-client-demo
+├── src
+│   ├── main
+│   │   ├── java
+│   │   │   └── com
+│   │   │       └── example
+│   │   │           └── RestClientDemoApplication.java
+│   │   │           └── RestClient.java
+│   │   │           └── model
+│   │   │               ├── AssetDetail.java
+│   │   │               ├── AssetId.java
+│   │   │               ├── Quantity.java
+│   │   │               └── Security.java
+│   │   └── resources
+│   │       └── application.properties
+├── pom.xml
+
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class AssetId {
+    private String type;
+    private String value;
+
+    // Constructors, getters, and setters
+}
+
+public class AssetDetail {
+    @JsonProperty("externalReference")
+    private String externalReference;
+    @JsonProperty("assetName")
+    private String assetName;
+    @JsonProperty("assetId")
+    private AssetId assetId;
+    @JsonProperty("group1Quantity")
+    private Quantity group1Quantity;
+    @JsonProperty("group2Quantity")
+    private Quantity group2Quantity;
+
+    // Constructors, getters, and setters
+}
+
+public class Quantity {
+    private int value;
+
+    // Constructors, getters, and setters
+}
+
+public class Security {
+    @JsonProperty("tradeDate")
+    private String tradeDate;
+    @JsonProperty("settlementDate")
+    private String settlementDate;
+
+    // Constructors, getters, and setters
+}
+
+public class SettlementRequest {
+    @JsonProperty("accountId")
+    private String accountId;
+    @JsonProperty("transactionId")
+    private String transactionId;
+    @JsonProperty("assetDetail")
+    private AssetDetail assetDetail;
+    @JsonProperty("security")
+    private Security security;
+
+    // Constructors, getters, and setters
+}
+
+
+
+
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunctions;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+public class RestClient {
+
+    public static void main(String[] args) {
+        // Create the WebClient instance
+        WebClient webClient = WebClient.builder()
+                .baseUrl("http://rereg-in-integration-service-uat.np3a.paas")
+                .filter(ExchangeFilterFunctions.basicAuthentication("your_username", "your_password"))
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader("FIL-CHANNEL", "WEB")
+                .defaultHeader("requestId", "12345")
+                .defaultHeader("FIL-BUSINESS", "ADVISED")
+                .build();
+
+        // Set the request URL path
+        String urlPath = "/reregistration-in/security/settlement";
+
+        // Create the request body object
+        AssetId assetId = new AssetId();
+        assetId.setType("ISIN");
+        assetId.setValue("GB2435etdgfhjhd");
+
+        Quantity group1Quantity = new Quantity();
+        group1Quantity.setValue(3);
+
+        Quantity group2Quantity = new Quantity();
+        group2Quantity.setValue(0);
+
+        AssetDetail assetDetail = new AssetDetail();
+        assetDetail.setExternalReference("1234567890987");
+        assetDetail.setAssetId(assetId);
+        assetDetail.setGroup1Quantity(group1Quantity);
+        assetDetail.setGroup2Quantity(group2Quantity);
+
+        Security security = new Security();
+        security.setTradeDate("2023-04-28");
+        security.setSettlementDate("2023-04-28");
+
+        SettlementRequest request = new SettlementRequest();
+        request.setAccountId("test123");
+        request.setTransactionId(null);
+        request.setAssetDetail(assetDetail);
+        request.setSecurity(security);
+
+        // Send the POST request
+        Mono<String> responseMono = webClient.post()
+                .uri(urlPath)
+                .body(BodyInserters.fromValue(request))
+                .retrieve()
+                .bodyToMono(String.class);
+
+        // Subscribe to the response and handle it
+        responseMono.subscribe(
+                responseBody -> System.out.println("Request successful. Response body: " + responseBody),
+                error -> System.err.println("Request failed. Error: " + error.getMessage())
+        );
+    }
+}
