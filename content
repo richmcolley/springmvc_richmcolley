@@ -1,0 +1,23 @@
+Sure! Here are the steps involved in the process:
+
+1. User Submits Instruction: The user submits an instruction on the web interface, providing the necessary details for the brokerage transaction.
+
+2. BPM Receives the Instruction: The Business Process Management (BPM) system receives the instruction from the web interface.
+
+3. BPM Creates Case on Altus: The BPM system creates a case on the Altus platform, initiating the brokerage transaction process.
+
+4. BPM Sends Brokerage Fund Details to WBS: The BPM system sends the relevant brokerage fund details to the WBS (Wealth Brokerage System) for further processing.
+
+5. WBS Processes Fund Details: The WBS processes the brokerage fund details received from BPM.
+
+6. WBS Sends Notification to BPI: Once the fund details are processed, WBS sends a notification to the BPI (Business Process Integration) system to update the status.
+
+7. BPI Relays Notification to BPM: The BPI system receives the notification from WBS and relays it to the BPM system.
+
+8. BPM Updates Fund Status on Altus: Upon receiving the notification, the BPM system updates the fund status on the Altus platform.
+
+9. Altus Sends Notification to BPM: After the fund status is updated on Altus, the platform sends a notification back to the BPM system.
+
+10. BPM Places the Deal: With the updated fund status and all necessary information, the BPM system proceeds to place the deal as per the user's initial instruction.
+
+These steps illustrate the flow of information and actions involved in processing a brokerage transaction, involving interactions between the user, BPM system, Altus platform, WBS, and BPI. The process ensures that the brokerage transaction is efficiently executed, and notifications are sent and received appropriately to keep all parties informed at every stage of the transaction.
