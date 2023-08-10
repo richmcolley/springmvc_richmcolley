@@ -1,31 +1,21 @@
-Subject: Urgent: Notification Issue with WBS (Vendor API) Affecting Deal Placement - Action Required for SAYE Project
+Subject: Regarding IR Tool and Its Maintenance
 
-Dear [Upper Management],
+Dear [Recipient's Name],
 
-I hope this email finds you well. I am writing to urgently address an ongoing issue with the WBS (Vendor API) integration, which has persisted since its inception. This issue is now becoming critical, especially with the upcoming SAYE project where a high number of clients are expected to participate.
+I hope this email finds you well. I wanted to provide some clarity regarding the IR (Issue Resolution) Tool, its purpose, and its maintenance going forward.
 
-As you may recall, when we first onboarded WBS, we discovered a flaw in their notification system, where it fails to send notifications to our team when the "ceading" (previous) and "acquiring" (current) crest IDs are identical. At that time, the business agreed to manually process such cases due to the low volume of such scenarios.
+The IR Tool was developed as a self-service solution catering to a specific group of users and was not intended for production use. It was built to facilitate certain functionalities and workflows related to issue resolution. As this tool is not designated as a production application, it is important to note that the broader business operations should not rely on it as a critical dependency.
 
-However, with the SAYE project approaching its first tranche on 4th August, we anticipate a significant surge in the number of clients participating. This means that the issue of non-receipt of notifications will be exacerbated, leading to a higher chance of missing deals and potential financial losses.
+Furthermore, I'd like to highlight that the IR Tool is currently situated on a decommissioning path due to its foundation on the instruction DB. This decision was made to streamline our technology landscape and allocate resources efficiently.
 
-While manual processing was a feasible workaround in the past, the anticipated volume of clients for the SAYE project makes it impractical to rely on manual intervention. Additionally, the increasing scale of our operations demands an automated and robust deal placement process to ensure efficiency, accuracy, and timely execution.
+Given the circumstances, it's essential that we refrain from making any modifications or enhancements directly to the IR Tool. If there are any requirements for changes or improvements to the tool, these should be addressed by the delivery team responsible for managing such matters.
 
-Action Plan for Urgent Resolution:
-1. Immediately escalate the issue with the WBS vendor and insist on an urgent investigation and resolution. Emphasize the criticality of resolving the notification problem before the first tranche of the SAYE project on 4th August.
-2. Engage a dedicated team to work closely with the vendor to monitor their progress, provide support, and follow up on the resolution.
+I understand that you have already discussed this matter with Martin. To ensure a smooth transition and appropriate handling, I kindly request your support in aligning any necessary actions with the delivery team. They will be better equipped to evaluate the feasibility and implications of any changes to the IR Tool.
 
-Given the time-sensitive nature of this matter, I have assembled a cross-functional team comprising IT, Operations, and Deal Management experts to work together on the issue. We are committed to resolving the problem before the SAYE project's first tranche, ensuring a smooth and seamless deal placement process for our clients.
-
-To prevent any potential disruption during the SAYE project, we need your full support and involvement in expediting this resolution. Our team will provide regular updates on the progress and collaborate with the vendor to ensure a satisfactory resolution.
-
-I understand the significance of the SAYE project for our organization, and our ability to deliver a seamless experience to our clients is of utmost importance. Therefore, I seek your guidance and support to prioritize this matter and allocate the necessary resources to ensure a successful resolution.
-
-Should you have any questions or require additional information, please feel free to reach out to me or the team at any time.
-
-Thank you for your immediate attention and support.
+Thank you for your cooperation and understanding in this matter. Please feel free to reach out if you have any further questions or require additional information.
 
 Best regards,
 
 [Your Name]
-[Your Title/Position]
+[Your Title]
 [Your Contact Information]
