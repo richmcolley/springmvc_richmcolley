@@ -1,1 +1,26 @@
 
+Subject: Clarification Regarding Excel Macro Button Behavior in Trade Management Tool
+
+Dear [Recipient's Name],
+
+I trust this email finds you well. I wanted to address a recent issue that has come to our attention regarding the behavior of the Excel macro button within our Trade Management Tool. After conducting a thorough investigation, we have identified that the cause of the unexpected behavior stems from a specific user processing scenario involving the dual-clicking of the macro button.
+
+Allow me to provide you with a detailed explanation of the situation:
+
+The Excel macro button, when clicked, sequentially invokes the "test API" for each row in the dataset. This sequential execution is designed to process each row one after the other. However, we have noticed that when a user inadvertently clicks the submit button twice in quick succession, it initiates two iterations of the sequential process.
+
+In the first iteration, the "test API" requests are sent for each row. However, due to the second iteration having already begun, the initial requests are duplicated for the rows. This results in the first row being processed twice. However, by the time the second iteration processes the second row, the first row's request has already been processed in the first iteration.
+
+In essence, this behavior is not a technical flaw or a system malfunction; rather, it is a user processing issue stemming from the inadvertent dual-clicking of the macro button. The nature of the sequential execution combined with the rapid clicks causes this duplication of processing.
+
+To address this situation, we kindly request that users be informed about this behavior and advised to refrain from clicking the submit button multiple times in quick succession. We understand the importance of user awareness and are committed to providing the necessary guidance to ensure the smooth usage of our Trade Management Tool.
+
+If you have any further questions or concerns regarding this matter, please do not hesitate to reach out. We value your input and appreciate your understanding as we work to improve the user experience and address any issues that arise.
+
+Thank you for your attention to this matter, and we look forward to your continued support.
+
+Best regards,
+
+[Your Name]
+[Your Title]
+[Your Contact Information]
