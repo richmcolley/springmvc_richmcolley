@@ -1,1 +1,187 @@
+<dependencies>
+    <!-- Spring Boot Starter -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter</artifactId>
+    </dependency>
+
+    <!-- Spring Boot Starter Web -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- Spring Boot Starter Data JDBC -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+
+    <!-- Spring Boot Starter Mail -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-mail</artifactId>
+    </dependency>
+
+    <!-- Spring Boot Starter Test -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+
+    <!-- HikariCP Connection Pool (Spring Boot 2.x default) -->
+    <dependency>
+        <groupId>com.zaxxer</groupId>
+        <artifactId>HikariCP</artifactId>
+    </dependency>
+
+    <!-- Microsoft SQL Server JDBC Driver -->
+    <dependency>
+        <groupId>com.microsoft.sqlserver</groupId>
+        <artifactId>mssql-jdbc</artifactId>
+        <version>9.4.0.jre8</version> <!-- Use the appropriate version -->
+    </dependency>
+</dependencies>
+
+
+
+spring.datasource.url=jdbc:sqlserver://your-server:1433;databaseName=your_db_name
+spring.datasource.username=your_db_username
+spring.datasource.password=your_db_password
+spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+spring.mail.host=your_smtp_host
+spring.mail.port=your_smtp_port
+spring.mail.username=your_email_username
+spring.mail.password=your_email_password
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+# ServiceApp queries
+query.service-app.select-by-service-type-and-created-at=SELECT * FROM ServiceApp WHERE service_type = 'BrokerageResponse' AND created_at > ?
+
+# Main queries
+query.main.select-by-caller-reference-and-value=SELECT * FROM Main WHERE caller_reference = ? AND value = 'Asset_receive'
+
+
+
+├── src
+│   ├── main
+│   │   ├── java
+│   │   │   ├── com
+│   │   │   │   ├── yourcompany
+│   │   │   │   │   ├── YourApplication.java
+│   │   │   │   │   ├── config
+│   │   │   │   │   │   ├── EmailConfig.java
+│   │   │   │   │   ├── model
+│   │   │   │   │   │   ├── Main.java
+│   │   │   │   │   │   ├── ServiceApp.java
+│   │   │   │   │   ├── service
+│   │   │   │   │   │   ├── ScheduledService.java
+├── src
+│   ├── main
+│   │   ├── resources
+│   │   │   ├── application.properties
+
+
+
+
+
+@Service
+public class ScheduledService {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private JavaMailSender javaMailSender;
+
+    @Value("${query.service-app.select-by-service-type-and-created-at}")
+    private String serviceAppQuery;
+
+    @Value("${query.main.select-by-caller-reference-and-value}")
+    private String mainQuery;
+
+    @Scheduled(cron = "0 */30 * * * *") // Runs every 30 minutes
+    public void processScheduledTask() {
+        LocalDateTime currentTime = LocalDateTime.now();
+        LocalDateTime thirtyMinutesAgo = currentTime.minusMinutes(30);
+
+        List<ServiceApp> serviceApps = jdbcTemplate.query(serviceAppQuery, new Object[]{thirtyMinutesAgo}, new BeanPropertyRowMapper<>(ServiceApp.class));
+
+        List<String> callerReferencesToSendEmail = new ArrayList<>();
+
+        for (ServiceApp serviceApp : serviceApps) {
+            String callerReference = serviceApp.getCallerReference();
+
+            List<Main> mainRecords = jdbcTemplate.query(mainQuery, new Object[]{callerReference}, new BeanPropertyRowMapper<>(Main.class));
+
+            if (mainRecords.isEmpty()) {
+                callerReferencesToSendEmail.add(callerReference);
+            }
+        }
+
+        if (!callerReferencesToSendEmail.isEmpty()) {
+            sendEmail(callerReferencesToSendEmail);
+        }
+    }
+
+    private void sendEmail(List<String> callerReferences) {
+        // Construct email content using callerReferences
+        StringBuilder emailContent = new StringBuilder();
+        emailContent.append("The following caller references have issues:\n");
+
+        for (String callerReference : callerReferences) {
+            emailContent.append("- ").append(callerReference).append("\n");
+        }
+
+        // Create MimeMessageHelper to send the email
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage);
+
+        try {
+            helper.setTo("recipient@example.com"); // Set recipient email address
+            helper.setSubject("Issues with Caller References");
+            helper.setText(emailContent.toString(), true);
+            javaMailSender.send(mimeMessage);
+        } catch (MessagingException e) {
+            // Handle email sending exception
+        }
+    }
+}
+
+
+
+@Configuration
+public class EmailConfig {
+
+    @Value("${spring.mail.host}")
+    private String host;
+
+    @Value("${spring.mail.port}")
+    private int port;
+
+    @Value("${spring.mail.username}")
+    private String username;
+
+    @Value("${spring.mail.password}")
+    private String password;
+
+    @Bean
+    public JavaMailSender javaMailSender() {
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+        mailSender.setHost(host);
+        mailSender.setPort(port);
+        mailSender.setUsername(username);
+        mailSender.setPassword(password);
+
+        Properties props = mailSender.getJavaMailProperties();
+        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.debug", "true");
+
+        return mailSender;
+    }
+}
 
