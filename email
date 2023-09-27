@@ -1,1 +1,40 @@
 
+Subject: Meeting Minutes - Add Note Error Discussion
+
+Dear Team,
+
+I hope this email finds you well. I wanted to provide you with the minutes of our recent meeting where we discussed the "Add Note" error with Origo and the potential steps to address it.
+
+**Meeting Details:**
+- Date: [Insert Date]
+- Time: [Insert Time]
+- Attendees: [Insert Names]
+
+**Discussion Summary:**
+
+1. **Origo's Response:**
+   - Origo acknowledged that they introduced a validation for the "Add Note" feature in their release on 20th August. However, they clarified that they did not communicate this change to any consumers as it was considered a non-functional change.
+
+2. **Resolution Efforts:**
+   - Origo assured us that they are actively working on resolving or relaxing this validation. They emphasized that complete removal of the validation may not be possible, as it was implemented to prevent bulk messaging from consumers.
+
+3. **Internal Fix Consideration:**
+   - Origo suggested that we explore any potential internal fixes that can be implemented on our end as an interim solution to mitigate the issue.
+
+4. **Camunda Team Involvement:**
+   - We also discussed involving the Camunda team to assess the feasibility of making slight adjustments to the note being added. Camunda is currently analyzing this issue from their perspective.
+
+**Next Steps:**
+
+- We will continue to collaborate with Origo on resolving the "Add Note" error and explore potential interim solutions.
+- The Camunda team will provide their findings and recommendations regarding the note adjustment.
+
+Please feel free to reach out if you have any further questions or suggestions regarding this matter. We will keep you updated on any developments as we work towards a resolution.
+
+Thank you for your attention and cooperation.
+
+Best regards,
+
+[Your Name]
+[Your Title]
+[Your Contact Information]
