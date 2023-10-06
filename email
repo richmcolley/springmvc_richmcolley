@@ -1,1 +1,22 @@
 
+Subject: Urgent: Issue with Origo API Response
+
+Hi John,
+
+I hope this email finds you well. I wanted to bring to your attention an issue we've been encountering with the Origo API response.
+
+Seems like you haven't reviewed the case we shared over your response.
+
+As you may recall, prior to August 20th, when we attempted to retrieve multiple message IDs in a single request, the Origo API responded by providing the available notes but sent a false status for archived notes. However, it appears that there has been a recent change in the API behavior.
+
+Now, when we make the same request, the API is rejecting the entire request instead of providing a partial response as it did before. This unexpected behavior is causing disruptions in our workflow and impacting our ability to retrieve the necessary information efficiently.
+
+We would greatly appreciate it if you could look into this matter at your earliest convenience. Understanding the cause of this change in API behavior and finding a resolution or workaround is crucial for us to continue operating smoothly.
+
+If you need any additional information or logs to assist with troubleshooting this issue, please let us know, and we will provide them promptly.
+
+Thank you for your attention to this matter, and we look forward to your prompt response.
+
+Best regards,
+
+[Your Name]
