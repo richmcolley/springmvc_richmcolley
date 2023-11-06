@@ -1,1 +1,26 @@
 
+Subject: Urgent Concerns Regarding Origo Services and Request for Resolution
+
+Dear [Recipient's Name],
+
+I hope this email finds you well. I am writing to bring to your attention the ongoing issues we've been encountering with Origo's services, which have significantly impacted our operations. Our attempts to address these concerns with their team have unfortunately proven to be quite challenging and unproductive.
+
+On the 6th and 7th of September, we raised critical issues with Origo that directly correlated with errors coinciding with their maintenance release. Despite providing evidence that clearly indicated the alignment of these errors with their updates, Origo persistently denied any responsibility, offering responses that were far from satisfactory. It appeared as though they were dismissive of their implementation issues and merely countered our inquiries without addressing the root cause. It took an extensive 1.5 months of persistent effort and numerous examples from our end to finally convince them of the issues originating from their platform.
+
+Regrettably, we have yet to receive any fixes from Origo. Consequently, our team has had to initiate internal remedies to address both issues, causing additional strain on our resources and affecting our operational efficiency.
+
+Moreover, when attempting to test our internal fixes in the UAT (non-production) environment, we encountered discrepancies in the behavior of Origo services compared to the production environment. This lack of synchronization between their environments necessitated further effort from our end to validate the effectiveness of our internal fixes, adding unnecessary complexity to our processes.
+
+Adding to the challenges, we were not informed of any changes in their release, making it increasingly difficult for us to anticipate or adapt to alterations on their end.
+
+Given the critical nature of these issues and their impact on our operations, I urge your immediate attention and intervention in addressing these matters. We are in need of swift resolution and a proactive approach from Origo to rectify the persistent issues and ensure better synchronization between their environments.
+
+I kindly request your assistance in escalating this matter within our channels of communication with Origo and facilitating a prompt resolution. If possible, I would greatly appreciate a follow-up meeting to discuss potential solutions and a plan of action to mitigate these ongoing challenges.
+
+Thank you for your prompt attention to this matter. I remain at your disposal for any further information or discussions needed.
+
+Warm regards,
+
+[Your Name]
+[Your Position]
+[Your Contact Information]
