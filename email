@@ -1,1 +1,24 @@
 
+Subject: Urgent: Verification Required for NLB and ALB IPs Auto Syncing in Other AWS Accounts
+
+Hi Martin,
+
+I hope this email finds you well. 
+
+Today, we encountered a critical issue in both production and non-production environments related to an application hosted on the IILT account on AWS. The problem stemmed from the automatic syncing of Network Load Balancer (NLB) and Application Load Balancer (ALB) IPs.
+
+Upon investigation, we discovered that a scheduled rule on the AWS account, responsible for triggering a Lambda function to sync NLB and ALB IPs, was disabled. After consultation with the Engineering team, we promptly re-enabled this rule, resulting in the synchronization of both IPs.
+
+As per our discussion in today's call, it is imperative that we verify the status of this rule in other AWS accounts. Proactively identifying and addressing any potential issues in advance will help prevent similar incidents in the future.
+
+Could you please coordinate with the relevant teams to perform a thorough check of the NLB and ALB IP syncing rules in all our AWS accounts? Confirming that these rules are enabled and functioning correctly will add an extra layer of security and stability to our systems.
+
+Your prompt attention to this matter is highly appreciated. If you require any additional information or assistance, please do not hesitate to reach out.
+
+Thank you for your cooperation.
+
+Best regards,
+
+[Your Full Name]
+[Your Position]
+[Your Contact Information]
