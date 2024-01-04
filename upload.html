@@ -1,34 +1,163 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Upload Excel File</title>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script>
-    $(document).ready(function() {
-      $('#excelFileInput').change(function() {
-        var fileData = new FormData();
-        fileData.append('file', $('#excelFileInput')[0].files[0]);
+<!-- Add Spring Boot Starter dependencies -->
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-csv</artifactId>
+        <version>1.9.0</version>
+    </dependency>
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+    </dependency>
+</dependencies>
 
-        $.ajax({
-          url: '/upload',
-          type: 'POST',
-          data: fileData,
-          cache: false,
-          contentType: false,
-          processData: false,
-          success: function(response) {
-            console.log('Upload successful');
-            // Process the response as needed
-          },
-          error: function(xhr, status, error) {
-            console.error('Upload failed:', error);
-          }
+
+
+
+
+Main :
+
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class CsvApiApplication implements CommandLineRunner {
+
+    public static void main(String[] args) {
+        SpringApplication.run(CsvApiApplication.class, args);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        // Your code for reading CSV, making API calls, and saving responses goes here
+    }
+}
+
+
+
+
+AppConfig :
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}
+
+
+
+
+CsvApiApplication :
+
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.List;
+
+@SpringBootApplication
+public class CsvApiApplication implements CommandLineRunner {
+
+    private static final String CSV_FILE_PATH = "input.csv";
+    private static final String OUTPUT_CSV_FILE_PATH = "output.csv";
+    private static final String API_URL = "https://example.com/api"; // Replace with your actual API URL
+
+    private final RestTemplate restTemplate;
+
+    public CsvApiApplication(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        Reader reader = new FileReader(CSV_FILE_PATH);
+        CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT);
+
+        FileWriter fileWriter = new FileWriter(OUTPUT_CSV_FILE_PATH);
+        CSVFormat csvFormat = CSVFormat.DEFAULT.withHeader("ID", "Name", "Response");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        csvParser.forEach(record -> {
+            // Read data from CSV
+            String id = record.get("ID");
+            String name = record.get("Name");
+
+            // Create JSON request payload
+            JsonRequest request = new JsonRequest();
+            request.setContext(new Context("xyz", "xyz"));
+
+            List<AssetIdentifier> assetIdentifiers = new ArrayList<>();
+            AssetIdentifier assetIdentifier = new AssetIdentifier("", "", "", "");
+            assetIdentifiers.add(assetIdentifier);
+
+            request.setAssetIdentifier(assetIdentifiers);
+            request.setUan("");
+            request.setDfm(null);
+
+            FilterConditions filterConditions = new FilterConditions();
+            filterConditions.setChannel(List.of("A"));
+            filterConditions.setProductCode(List.of("ISA"));
+            filterConditions.setCleanFund("YES");
+            filterConditions.setAmc("");
+            filterConditions.setReregEligible(null);
+            filterConditions.setRemoveRestriction(null);
+            filterConditions.setDfmRestriction("YES");
+            filterConditions.setSimilarShareClass("YES");
+            filterConditions.setSimilarProductType(null);
+
+            request.setFilterConditions(filterConditions);
+
+            // Prepare HTTP entity with headers and JSON payload
+            HttpEntity<JsonRequest> entity = new HttpEntity<>(request, headers);
+
+            // Make POST API call
+            ResponseEntity<String> responseEntity = restTemplate.postForEntity(API_URL, entity, String.class);
+            String apiResponse = responseEntity.getBody();
+
+            // Write data to the output CSV
+            try {
+                fileWriter.writeRecord(id, name, apiResponse);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
-      });
-    });
-  </script>
-</head>
-<body>
-  <input type="file" id="excelFileInput" accept=".xls, .xlsx" />
-</body>
-</html>
+
+        fileWriter.close();
+        csvParser.close();
+    }
+
+    public static void main(String[] args) {
+        SpringApplication.run(CsvApiApplication.class, args);
+    }
+}
