@@ -1,1 +1,199 @@
+<dependencies>
+    <!-- Spring Boot Starter Web for WebClient -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+
+    <!-- Jackson for JSON processing -->
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+    </dependency>
+</dependencies>
+
+
+
+api.url=https://api.example.com/endpoint
+csv.file.path=path/to/request_data.csv
+output.csv.file.path=path/to/response_data.csv
+
+
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+
+public class AssetIdentifierResponse {
+
+    @JsonProperty("assetIdentifier")
+    private List<AssetIdentifier> assetIdentifiers;
+
+    @JsonProperty("errorCode")
+    private String errorCode;
+
+    @JsonProperty("errorDetails")
+    private String errorDetails;
+
+    // getters and setters
+}
+
+class AssetIdentifier {
+
+    private String id;
+    private String code;
+    private List<String> channel;
+
+    @JsonProperty("productCode")
+    private List<String> productCodes;
+
+    @JsonProperty("commonShareClass")
+    private String commonShareClass;
+
+    private String status;
+
+    @JsonProperty("alternateShareClasses")
+    private List<AlternateShareClass> alternateShareClasses;
+
+    // getters and setters
+}
+
+class AlternateShareClass {
+
+    private String id;
+    private String code;
+    private List<String> channel;
+
+    @JsonProperty("productCode")
+    private List<String> productCodes;
+
+    @JsonProperty("commonShareClass")
+    private String commonShareClass;
+
+    private String status;
+
+    // getters and setters
+}
+
+
+
+
+
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class CsvHandler {
+
+    public List<ApiRequest> readCsvAndCreateRequests(String csvFilePath) throws Exception {
+        try {
+            return Files.lines(Path.of(csvFilePath))
+                .skip(1) // Skip header line
+                .map(line -> line.split(","))
+                .map(this::createApiRequest)
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RuntimeException("Error reading CSV file", e);
+        }
+    }
+
+    private ApiRequest createApiRequest(String[] values) {
+        ApiRequest request = new ApiRequest();
+        request.setTag1(values[0]);
+        request.setTag2(values[1]);
+        request.setTag3(values[2]);
+        return request;
+    }
+
+    public void saveResponseDetailsToCsv(ApiResponse response, String outputCsvFilePath) {
+        try (BufferedWriter writer = Files.newBufferedWriter(Path.of(outputCsvFilePath))) {
+            // Write your logic to save specific tags to CSV
+        } catch (Exception e) {
+            // Handle CSV writing errors
+            e.printStackTrace();
+        }
+    }
+}
+
+
+
+
+
+import org.springframework.web.reactive.function.client.WebClient;
+
+public class ApiService {
+
+    private final WebClient webClient;
+    private final String apiUrl;
+
+    public ApiService(String apiUrl) {
+        this.webClient = WebClient.create();
+        this.apiUrl = apiUrl;
+    }
+
+    public AssetIdentifierResponse makeApiCall(ApiRequest request) {
+        try {
+            return webClient.post()
+                .uri(apiUrl)
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(AssetIdentifierResponse.class)
+                .block();
+        } catch (Exception e) {
+            // Handle API call errors
+            e.printStackTrace();
+            return new AssetIdentifierResponse(); // or throw a specific exception
+        }
+    }
+}
+
+
+
+
+
+
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.beans.factory.annotation.Value;
+
+import java.util.List;
+
+@SpringBootApplication
+public class ApiApplication implements CommandLineRunner {
+
+    @Value("${api.url}")
+    private String apiUrl;
+
+    @Value("${csv.file.path}")
+    private String csvFilePath;
+
+    @Value("${output.csv.file.path}")
+    private String outputCsvFilePath;
+
+    public static void main(String[] args) {
+        SpringApplication.run(ApiApplication.class, args);
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        CsvHandler csvHandler = new CsvHandler();
+        List<ApiRequest> requests = csvHandler.readCsvAndCreateRequests(csvFilePath);
+
+        ApiService apiService = new ApiService(apiUrl);
+
+        for (ApiRequest request : requests) {
+            AssetIdentifierResponse response = apiService.makeApiCall(request);
+            // Process the API response
+            System.out.println("Result: " + response.getAssetIdentifiers());
+            System.out.println("Error Code: " + response.getErrorCode());
+            System.out.println("Error Details: " + response.getErrorDetails());
+
+            // Save details to CSV
+            csvHandler.saveResponseDetailsToCsv(response, outputCsvFilePath);
+        }
+    }
+}
 
