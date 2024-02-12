@@ -1,1 +1,39 @@
 
+Subject: Analysis and Action Items for ASC Portal Issues
+
+Hi Martin,
+
+I hope this email finds you well. Before delving into the specific problem statements, it's crucial to gain a comprehensive understanding of the ASC Portal's behavior. The portal relies on the ASC API to retrieve details regarding both the original asset and ASC asset (if available). Subsequently, it conducts further analysis based on the ASC API response.
+Let's examine the analysis of Point 1 and Point 2:
+
+
+I hope this email finds you well. I wanted to bring to your attention a couple of issues identified during the analysis of the ASC Portal's functionality with respect to ASC API. Below is a detailed breakdown of the problems and their respective analyses.
+
+**Problem Point 1: Portal displaying ASC asset without suggesting conversion**
+
+*Analysis:*
+The ASC Portal is currently displaying the clean share class returned by the ASC API, but it is not providing suggestions for asset conversion. The validation checks for the original fund conversion eligibility are being handled by the portal. While the portal behavior is correct, there is an option to enhance it by removing the alternate share class asset from the portal when conversion is not required. This adjustment might provide a more streamlined user experience.
+
+**Problem Point 2: Portal suggesting Post-conversion fund with dealing eligibility false**
+
+*Analysis:*
+Upon analysis of the SC Portal code, it has been observed that it checks only the original asset's dealing eligibility to identify asset conversion, rather than considering the alternate share class asset returned by the ASC API. Although attempts were made to identify similar cases in the production environment, none were found. To resolve this issue, it is recommended to review the ASC API logic to determine if it should return assets with dealing eligibility set to false.
+
+**Action Items:**
+1. *For Problem Point 1:*
+   - Evaluate the option of removing alternate share class assets from the portal when conversion is not required.
+   - Discuss with the development team to implement the suggested changes for a more user-friendly experience.
+
+2. *For Problem Point 2:*
+   - Conduct a thorough review of the ASC API logic to determine if it should return assets with dealing eligibility set to false.
+   - If necessary, update the ASC API logic to ensure accurate dealing eligibility information is provided to the SC Portal.
+
+I recommend scheduling a meeting with the concerned teams to discuss these action items further and decide on the appropriate course of action. Please feel free to reach out if you have any questions or if further clarification is needed.
+
+Thank you for your attention to these matters.
+
+Best regards,
+
+[Your Full Name]
+[Your Position]
+[Your Contact Information]
