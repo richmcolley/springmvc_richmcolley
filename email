@@ -1,19 +1,1 @@
-Subject: Issue with BPM Xtrac Integration and APPSUP WI
 
-Hi Martin,
-
-I hope this email finds you well. I wanted to bring to your attention an issue we encountered with the BPM Xtrac integration, specifically related to the Xtrac cookie reset.
-
-As you may be aware, the Xtrac cookie is reset daily at 3:30 AM in all environments. However, yesterday we faced a setback when the Xtrac services were down in UAT during the scheduled cookie reset. Consequently, when the reset occurred on the subsequent day cycle (today), Work Items (WIs) were automatically moved from the queue and updated in the CAIP.
-
-Regarding the APPSUP WI, I'd like to clarify that BPM's role is to retrieve details from the WI, pass the information to the Lumpsum application, and subsequently move the WI to the END stage. The Lumpsum application is responsible for placing deals on Sonata, and in the event of any failure, it generates a new failure WI, which, in this case, manifested in the APPSUP queue.
-
-I wanted to bring this to your attention as it may have implications for our workflow. If you have any insights or suggestions on how we can mitigate this issue or improve the process, please feel free to share your thoughts.
-
-Looking forward to your guidance on this matter.
-
-Best regards,
-
-[Your Name]
-[Your Position]
-[Your Contact Information]
