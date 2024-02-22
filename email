@@ -1,1 +1,4 @@
 
+Specifically, we've observed that the Asset service is returning a 200 response with the status "Fi_I_N_F" for certain funds. While our BPM system has a robust exception handling mechanism in place, we want to highlight that this behavior is intentional and aligns with the desired response when a fund is off the platform.
+
+Given that this is considered an expected outcome, we find it inappropriate to restrict or modify our BPM system's exception handling for this scenario. Instead, we believe that the root cause of this behavior lies within the Asset service.
