@@ -1,10 +1,23 @@
+Subject: Assistance Required: AlternateShareClass Portal Logic Evaluation
 
-Specifically, we've observed that the Asset service is returning a 200 response with the status "Fi_I_N_F" for certain funds. While our BPM system has a robust exception handling mechanism in place, we want to highlight that this behavior is intentional and aligns with the desired response when a fund is off the platform.
+Hi Martin,
 
-Given that this is considered an expected outcome, we find it inappropriate to restrict or modify our BPM system's exception handling for this scenario. Instead, we believe that the root cause of this behavior lies within the Asset service.
+I hope this email finds you well. We are currently in the process of reevaluating the logic behind our AlternateShareClass Portal, specifically focusing on the identification of asset conversions based on certain conditions.
 
+As you know, the functionality of this portal relies heavily on the ASC API. We would greatly appreciate your assistance in understanding and clarifying certain aspects of the API's implementation. Here are the specific queries we have:
 
+1. **commonShareClass Flag:**
+   - Could you please provide insights into how the API sets the value of the "commonShareClass" flag? Understanding the logic behind this flag is crucial for our reevaluation.
 
-During the retrieval of alternate asset details to identify the PRE conversion of an asset, we encountered an unexpected issue. Specifically, when attempting API calls to M* to retrieve off-platform asset details, an error was received from M*.
+2. **dealingAllowed Flag and Alternate Asset:**
+   - We are particularly interested in scenarios where the "dealingAllowed" flag is set to "NO" for an alternate asset. Does the API return information about this alternate asset in the response? Understanding the behavior in such cases is essential for our analysis.
 
-This error is not an expected behavior, and the BPM system has been designed to handle such exceptions by suspending the instance. Upon further investigation, it appears that the issue may lie either within the Asset Service or with M*.
+Your expertise in these matters would significantly contribute to our ongoing efforts. If possible, could we schedule a brief meeting to discuss these queries in more detail? Your availability for a discussion at your earliest convenience would be highly appreciated.
+
+Thank you in advance for your support, and we look forward to resolving these queries with your assistance.
+
+Best regards,
+
+[Your Full Name]
+[Your Position]
+[Your Contact Information]
