@@ -1,37 +1,22 @@
-
-Subject: Update on Altus Stock Transfer Validations and Pending Cases
+Subject: Summary of Recent Discussions and Actions
 
 Hi Martin,
 
-I hope this email finds you well.
+I hope you're doing well.
 
-I wanted to provide you with an update on our ongoing discussion regarding Altus Stock Transfer validations and the reasons for cases being stuck in the pending state on Altus.
+I wanted to summarize our recent conversations from last week and today regarding various validation checks and implementation decisions:
 
-After thorough analysis, we have identified two main reasons for cases remaining in the pending status:
+1. **Receiving Provider Company Name Validation:** In our current validation process, there was an intentional skipping of the "Receiving Provider Company Name" validation in our code. We are unsure why this was initially implemented in this way. However, moving forward, we have decided to remove this skip and ensure that the system validates the "Receiving Provider Company Name" as part of our standard validation checks.
 
-1. **Ceding Provider Sending Incorrect Requests**: The Altus Reregistration screen is designed for FIL funds only, regardless of whether it's a PURE STF or part of ReRegIN/ReRegOut instructions. Our application reads notifications from the Altus reregistration screen and identifies the type of transfer based on the Provider field. For instance, if Fidelity is mentioned in the receiving provider field, our application considers it a Reregistration IN case and attempts to retrieve further details from the Account Transfer screen. However, if the provider is not Fidelity, the application considers it a PURE STF. The issue arises when the ceding provider incorrectly mentions Fidelity as the receiving provider for pure STF cases. This leads to our system failing to identify further details from the Account Transfers Screen. This is primarily an incorrect processing issue by OPM, and a significant number of requests are coming from RATHBONES.
+2. **G1 & G2 Validation:** We discussed the G1 & G2 validation and concluded that it is currently not implemented in our BPM validation. Due to the complexity and the need for detailed analysis and development effort, we have decided not to include this validation in the current sprint.
 
-2. **System Creating Work Items Instead of Upfront Rejections**: We have a direct error code mapping for Altus rejections, which is maintained in our code. If an error code matches our list, the system directly rejects it on Altus. However, for error codes not on the list, the system creates work items for Ops processing, resulting in Altus staying in the Pending state.
+3. **Restricted Fund Validation:** During our call, we observed that some of the restricted funds were processed successfully by GFAS. Based on this observation and analysis, we have decided not to implement this specific validation check in our BPM process.
 
-We are actively working on correcting the second point mentioned above. Below is the segregation of error codes based on the validation list provided by Tom. Please note that these error codes are based on data from the last three months received in production.
+These decisions are aimed at optimizing our validation processes while ensuring that we focus our development efforts on areas that require immediate attention and provide the most significant impact.
 
-Regarding G1 & G2 units validation, I want to clarify that this validation is currently not implemented in our system. It is part of GFAS internal validation, so it cannot be included as a BPM validation.
+If you have any further insights or suggestions regarding these decisions or any other aspects of our project, please feel free to share them.
 
-For "Fund Not Recognized" issues, we only receive requests in the Asset Reregistration screen where the fund registrar is Fidelity.
-
-Regarding "Restricted Share Class" errors, the sample ISIN provided (123456789) has had successful deals in production, indicating that this issue may not be as widespread as initially thought.
-
-I believe addressing these issues will significantly enhance our process efficiency and reduce the number of cases stuck in the pending state.
-
-Looking forward to your feedback and any further actions required.
+Looking forward to our continued collaboration.
 
 Best regards,
 [Your Name]
-
-
-
-
-
-
-
-In our cases, the ceding provider (primarily RATHBONES) incorrectly marks Fidelity as the receiving provider for pure STF cases, causing our system to fail when retrieving details from the Account Transfer screen (not applicable for PURE STF). This is a processing issue by the originating party.
