@@ -1,17 +1,41 @@
-As we move forward with redesigning our BPM solution using Camunda and Java APIs, we have identified a critical scenario that needs to be addressed to ensure smooth and efficient operations.
-
-Problem Statement:
-When an API sends a 500 error or any other technical error, the current proposed solution requires the Camunda team to handle such cases, resulting in the suspension of the process within Camunda. This approach presents a significant challenge as the Camunda support team lacks the necessary knowledge of the business process and its criticality.
-
-Proposed Solution:
-To address this issue, we propose the following solution:
-
-Error Display on Ops Portal:
-
-When a technical error occurs, the error should be displayed on the Ops portal.
-Access to this error information should be restricted to the PROD support team only, as they possess the requisite knowledge of the business process and access to the resources needed to investigate the issue.
-Resume Task from Ops Portal:
-
-The support users on the Ops portal should have the ability to resume the task, which will subsequently resume the process within Camunda.
-This approach ensures that the team with the most relevant expertise and access can promptly address and resolve issues, minimizing downtime and ensuring continuity of operations.
-Implementing this solution will leverage the expertise of the PROD support team, enhance the efficiency of our error-handling process, and ensure that our BPM solution remains robust and reliable.
+src/main/java/com/example/transferout
+├── TransferOutApplication.java
+├── controller
+│   └── TransferOutController.java
+├── service
+│   ├── TransferOutService.java
+│   ├── impl
+│   │   └── TransferOutServiceImpl.java
+│   └── ValidationService.java
+├── model
+│   ├── TransferOutRequest.java
+│   ├── TransferOutResponse.java
+│   ├── soap
+│   │   ├── AccountRequest.java
+│   │   ├── AccountResponse.java
+│   │   ├── CustomerRetrieveRequest.java
+│   │   ├── CustomerRetrieveResponse.java
+│   │   ├── ContributionResponse.java
+│   │   └── ContributionRequest.java
+│   └── rest
+│       ├── HnVResponse.java
+│       ├── MifidEligibilityResponse.java
+│       └── TransferOutRequest.java
+├── config
+│   ├── RestTemplateConfig.java
+│   └── WebServiceConfig.java
+├── exception
+│   ├── CustomExceptionHandler.java
+│   └── InvalidCashAccountException.java
+├── client
+│   ├── CustomerRetrieveClient.java
+│   ├── AccountRetrieveClient.java
+│   ├── AccountDisambiguateClient.java
+│   ├── CustomerValidateClient.java
+│   ├── GetContributionClient.java
+│   ├── HnVClient.java
+│   ├── BlackOutClient.java
+│   ├── MifidEligibilityClient.java
+│   └── AccountLockClient.java
+└── dto
+    └── TransferOutRequest.java
