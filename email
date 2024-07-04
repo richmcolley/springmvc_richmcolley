@@ -1,41 +1,463 @@
-src/main/java/com/example/transferout
-├── TransferOutApplication.java
-├── controller
-│   └── TransferOutController.java
-├── service
-│   ├── TransferOutService.java
-│   ├── impl
-│   │   └── TransferOutServiceImpl.java
-│   └── ValidationService.java
-├── model
-│   ├── TransferOutRequest.java
-│   ├── TransferOutResponse.java
-│   ├── soap
-│   │   ├── AccountRequest.java
-│   │   ├── AccountResponse.java
-│   │   ├── CustomerRetrieveRequest.java
-│   │   ├── CustomerRetrieveResponse.java
-│   │   ├── ContributionResponse.java
-│   │   └── ContributionRequest.java
-│   └── rest
-│       ├── HnVResponse.java
-│       ├── MifidEligibilityResponse.java
-│       └── TransferOutRequest.java
-├── config
-│   ├── RestTemplateConfig.java
-│   └── WebServiceConfig.java
-├── exception
-│   ├── CustomExceptionHandler.java
-│   └── InvalidCashAccountException.java
-├── client
-│   ├── CustomerRetrieveClient.java
-│   ├── AccountRetrieveClient.java
-│   ├── AccountDisambiguateClient.java
-│   ├── CustomerValidateClient.java
-│   ├── GetContributionClient.java
-│   ├── HnVClient.java
-│   ├── BlackOutClient.java
-│   ├── MifidEligibilityClient.java
-│   └── AccountLockClient.java
-└── dto
-    └── TransferOutRequest.java
+package com.example.transferout.controller;
+
+import com.example.transferout.dto.TransferOutRequest;
+import com.example.transferout.model.TransferOutResponse;
+import com.example.transferout.service.TransferOutService;
+import com.example.transferout.exception.InvalidCashAccountException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+
+@RestController
+@RequestMapping("/api/transferout")
+public class TransferOutController {
+
+    @Autowired
+    private TransferOutService transferOutService;
+
+    @PostMapping
+    public ResponseEntity<?> transferOut(@RequestBody @Valid TransferOutRequest request) {
+        try {
+            transferOutService.processTransferOut(request);
+            return ResponseEntity.ok(new TransferOutResponse("Transfer out processed successfully"));
+        } catch (InvalidCashAccountException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new TransferOutResponse("Invalid_Cash_Account"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new TransferOutResponse("An error occurred"));
+        }
+    }
+}
+
+-------------------------------
+
+Service Interfaces
+TransferOutService.java
+
+package com.example.transferout.service;
+
+import com.example.transferout.dto.TransferOutRequest;
+import com.example.transferout.exception.InvalidCashAccountException;
+
+public interface TransferOutService {
+    void processTransferOut(TransferOutRequest request) throws InvalidCashAccountException;
+}
+
+
+ValidationService.java
+
+package com.example.transferout.service;
+
+import com.example.transferout.dto.TransferOutRequest;
+import com.example.transferout.model.soap.AccountResponse;
+import com.example.transferout.model.soap.ContributionResponse;
+import com.example.transferout.exception.InvalidCashAccountException;
+import org.springframework.stereotype.Service;
+
+@Service
+public class ValidationService {
+
+    public void validateCashAccount(TransferOutRequest request) throws InvalidCashAccountException {
+        if (isInvalidCashAccount(request)) {
+            throw new InvalidCashAccountException();
+        }
+    }
+
+    public void checkDealingPlatformOrAccountLevelBlocks(AccountResponse response) throws Exception {
+        if (hasDealingPlatformOrAccountLevelBlocks(response)) {
+            throw new Exception("Account has dealing platform or account level blocks");
+        }
+    }
+
+    public void checkHoldingMismatch(ContributionResponse response) throws Exception {
+        if (hasHoldingMismatch(response)) {
+            throw new Exception("Holding mismatch");
+        }
+    }
+
+    public boolean isGFASPlatform(AccountResponse response) {
+        return "GFAS".equals(response.getDealingPlatform());
+    }
+
+    public void removeRestrictedUnits(TransferOutRequest request) {
+        // Implement the logic to remove restricted units
+    }
+
+    public void sendResponse() {
+        // Implement the logic to send the response
+    }
+
+    private boolean isInvalidCashAccount(TransferOutRequest request) {
+        // Implement the logic to check for invalid cash account
+        return false;
+    }
+
+    private boolean hasDealingPlatformOrAccountLevelBlocks(AccountResponse response) {
+        // Implement the logic to check for dealing platform or account level blocks
+        return false;
+    }
+
+    private boolean hasHoldingMismatch(ContributionResponse response) {
+        // Implement the logic to check for holding mismatch
+        return false;
+    }
+}
+
+---------------------------------
+
+Service Implementations
+TransferOutServiceImpl.java
+
+package com.example.transferout.service.impl;
+
+import com.example.transferout.client.*;
+import com.example.transferout.dto.TransferOutRequest;
+import com.example.transferout.model.soap.*;
+import com.example.transferout.service.TransferOutService;
+import com.example.transferout.service.ValidationService;
+import com.example.transferout.exception.InvalidCashAccountException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.concurrent.CompletableFuture;
+
+@Service
+public class TransferOutServiceImpl implements TransferOutService {
+
+    private final CustomerRetrieveClient customerRetrieveClient;
+    private final AccountRetrieveClient accountRetrieveClient;
+    private final AccountDisambiguateClient accountDisambiguateClient;
+    private final CustomerValidateClient customerValidateClient;
+    private final GetContributionClient getContributionClient;
+    private final HnVClient hnVClient;
+    private final BlackOutClient blackOutClient;
+    private final MifidEligibilityClient mifidEligibilityClient;
+    private final AccountLockClient accountLockClient;
+    private final ValidationService validationService;
+
+    @Autowired
+    public TransferOutServiceImpl(
+        CustomerRetrieveClient customerRetrieveClient,
+        AccountRetrieveClient accountRetrieveClient,
+        AccountDisambiguateClient accountDisambiguateClient,
+        CustomerValidateClient customerValidateClient,
+        GetContributionClient getContributionClient,
+        HnVClient hnVClient,
+        BlackOutClient blackOutClient,
+        MifidEligibilityClient mifidEligibilityClient,
+        AccountLockClient accountLockClient,
+        ValidationService validationService
+    ) {
+        this.customerRetrieveClient = customerRetrieveClient;
+        this.accountRetrieveClient = accountRetrieveClient;
+        this.accountDisambiguateClient = accountDisambiguateClient;
+        this.customerValidateClient = customerValidateClient;
+        this.getContributionClient = getContributionClient;
+        this.hnVClient = hnVClient;
+        this.blackOutClient = blackOutClient;
+        this.mifidEligibilityClient = mifidEligibilityClient;
+        this.accountLockClient = accountLockClient;
+        this.validationService = validationService;
+    }
+
+    @Override
+    public void processTransferOut(TransferOutRequest request) throws InvalidCashAccountException {
+        // 1. Check if InvalidCash request
+        validationService.validateCashAccount(request);
+
+        // 2. Call Customer Retrieve SOAP API
+        customerRetrieveClient.retrieveCustomer(request.getCustomerId());
+
+        // 3. Call Account Retrieve SOAP API
+        AccountResponse accountResponse = accountRetrieveClient.retrieveAccount(request.getAccountId());
+        validationService.checkDealingPlatformOrAccountLevelBlocks(accountResponse);
+
+        // 4. Call Account Disambiguate and Customer Validate SOAP APIs in parallel
+        CompletableFuture<Void> disambiguateFuture = CompletableFuture.runAsync(() ->
+            accountDisambiguateClient.disambiguateAccount(request.getAccountId())
+        );
+        CompletableFuture<Void> validateFuture = CompletableFuture.runAsync(() ->
+            customerValidateClient.validateCustomer(request.getCustomerId())
+        );
+        CompletableFuture.allOf(disambiguateFuture, validateFuture).join();
+
+        // 5. Call Get Contribution SOAP API
+        ContributionResponse contributionResponse = getContributionClient.getContribution(request.getAccountId());
+        validationService.checkHoldingMismatch(contributionResponse);
+
+        // 6. Call HnV REST API
+        hnVClient.callHnV(request);
+
+        // 7. Call BlackOut REST Service
+        blackOutClient.callBlackOut(request);
+
+        // 8. Call Mifid Eligibility REST Service
+        mifidEligibilityClient.checkEligibility(request);
+
+        // 9. Remove restricted units for SPS
+        validationService.removeRestrictedUnits(request);
+
+        // 10. Call Account Lock REST API if Dealing platform is GFAS
+        if (validationService.isGFASPlatform(accountResponse)) {
+            accountLockClient.lockAccount(request.getAccountId());
+        }
+
+        // 11. Call Get Contribution SOAP API for Current Year
+        getContributionClient.getContributionForCurrentYear(request.getAccountId());
+
+        // 12. Send response
+        validationService.sendResponse();
+    }
+}
+
+-------------------------------------------
+
+
+Client Interfaces
+CustomerRetrieveClient.java
+
+package com.example.transferout.client;
+
+import com.example.transferout.model.soap.CustomerRetrieveResponse;
+
+public interface CustomerRetrieveClient {
+    CustomerRetrieveResponse retrieveCustomer(String customerId);
+}
+
+
+-----------------------
+
+AccountRetrieveClient.java
+
+package com.example.transferout.client;
+
+import com.example.transferout.model.soap.AccountResponse;
+
+public interface AccountRetrieveClient {
+    AccountResponse retrieveAccount(String accountId);
+}
+
+
+
+
+GetContributionClient.java
+
+package com.example.transferout.client;
+
+import com.example.transferout.model.soap.ContributionResponse;
+
+public interface GetContributionClient {
+    ContributionResponse getContribution(String accountId);
+    ContributionResponse getContributionForCurrentYear(String accountId);
+}
+------------------------------------
+
+
+Client Implementations
+CustomerRetrieveClientImpl.java
+
+package com.example.transferout.client.impl;
+
+import com.example.transferout.client.CustomerRetrieveClient;
+import com.example.transferout.model.soap.CustomerRetrieveRequest;
+import com.example.transferout.model.soap.CustomerRetrieveResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.ws.client.core.WebServiceTemplate;
+
+@Service
+public class CustomerRetrieveClientImpl implements CustomerRetrieveClient {
+
+    @Autowired
+    private WebServiceTemplate webServiceTemplate;
+
+    @Override
+    public CustomerRetrieveResponse retrieveCustomer(String customerId) {
+        CustomerRetrieveRequest request = new CustomerRetrieveRequest();
+        request.setCustomerId(customerId);
+
+        return (CustomerRetrieveResponse) webServiceTemplate.marshalSendAndReceive(request);
+    }
+}
+
+
+
+
+AccountRetrieveClientImpl.java
+
+package com.example.transferout.client.impl;
+
+import com.example.transferout.client.AccountRetrieveClient;
+import com.example.transferout.model.soap.AccountRequest;
+import com.example.transferout.model.soap.AccountResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.ws.client.core.WebServiceTemplate;
+
+@Service
+public class AccountRetrieveClientImpl implements AccountRetrieveClient {
+
+    @Autowired
+    private WebServiceTemplate webServiceTemplate;
+
+    @Override
+    public AccountResponse retrieveAccount(String accountId) {
+        AccountRequest request = new AccountRequest();
+        request.setAccountId(accountId);
+
+        return (AccountResponse) webServiceTemplate.marshalSendAndReceive(request);
+    }
+}
+
+
+
+
+CustomerValidateClientImpl.java
+
+package com.example.transferout.client.impl;
+
+import com.example.transferout.client.CustomerValidateClient;
+import com.example.transferout.model.soap.CustomerValidateRequest;
+import com.example.transferout.model.soap.CustomerValidateResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.ws.client.core.WebServiceTemplate;
+
+@Service
+public class CustomerValidateClientImpl implements CustomerValidateClient {
+
+    @Autowired
+    private WebServiceTemplate webServiceTemplate;
+
+    @Override
+    public void validateCustomer(String customerId) {
+        CustomerValidateRequest request = new CustomerValidateRequest();
+        request.setCustomerId(customerId);
+
+        webServiceTemplate.marshalSendAndReceive(request);
+    }
+}
+
+
+----------------------------------------
+
+Model Classes
+TransferOutRequest.java
+
+package com.example.transferout.dto;
+
+import javax.validation.constraints.NotEmpty;
+import java.io.Serializable;
+
+public class TransferOutRequest implements Serializable {
+
+    @NotEmpty
+    private String customerId;
+
+    @NotEmpty
+    private String accountId;
+
+    // Getters and setters...
+}
+
+
+
+TransferOutResponse.java
+
+package com.example.transferout.model;
+
+import java.io.Serializable;
+
+public class TransferOutResponse implements Serializable {
+
+    private String message;
+
+    public TransferOutResponse(String message) {
+        this.message = message;
+    }
+
+    // Getter and setter...
+}
+-----------------------------------------
+
+
+SOAP Model Classes
+CustomerRetrieveRequest.java
+
+package com.example.transferout.model.soap;
+
+public class CustomerRetrieveRequest {
+
+    private String customerId;
+
+    // Getters and setters...
+}
+
+
+CustomerRetrieveResponse.java
+
+package com.example.transferout.model.soap;
+
+public class CustomerRetrieveResponse {
+
+    private String customerName;
+
+    // Getters and setters...
+}
+
+
+REST Model Classes
+MifidEligibilityResponse.java
+
+package com.example.transferout.model.rest;
+
+public class MifidEligibilityResponse {
+
+    private boolean eligible;
+
+    // Getters and setters...
+}
+
+-----------------------------------
+
+
+Configuration Classes
+RestTemplateConfig.java
+
+package com.example.transferout.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+
+@Configuration
+public class RestTemplateConfig {
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}
+
+
+WebServiceConfig.java
+
+package com.example.transferout.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.ws.client.core.WebServiceTemplate;
+
+@Configuration
+public class WebServiceConfig {
+
+    @Bean
+    public WebServiceTemplate webServiceTemplate() {
+        return new WebServiceTemplate();
+    }
+}
+
+
+
