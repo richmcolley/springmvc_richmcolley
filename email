@@ -1,104 +1,111 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+openapi: 3.0.1
+info:
+  title: Provider Product API
+  description: API contract for retrieving provider product details
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api
+paths:
+  /providers/{providerId}:
+    get:
+      summary: Get provider product details
+      description: Returns product details based on provider ID and optional product type
+      parameters:
+        - $ref: '#/components/parameters/providerIdPathParam'
+        - $ref: '#/components/parameters/productTypeQueryParam'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderProductResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Provider not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
-    <groupId>com.myproject</groupId>
-    <artifactId>myproject</artifactId>
-    <version>1.0.0</version>
+components:
+  schemas:
+    ProviderProductResponse:
+      type: object
+      properties:
+        providerId:
+          type: string
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductTypeRecord'
+      required:
+        - providerId
+        - records
+    
+    ProductTypeRecord:
+      type: object
+      properties:
+        productType:
+          type: string
+          enum: [ISA, GIA, SIPP]
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductDetails'
+      required:
+        - productType
+        - details
 
-    <properties>
-        <java.version>17</java.version>
-        <cxf.version>3.4.5</cxf.version> <!-- Define CXF version here -->
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+    ProductDetails:
+      type: object
+      properties:
+        transferType:
+          type: string
+          enum: [RI, TI]
+        accountPattern:
+          type: string
+          description: Comma-separated account pattern string
+      required:
+        - transferType
+        - accountPattern
 
-    <dependencies>
-        <!-- Spring Boot dependencies -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web-services</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- CXF dependencies -->
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-frontend-jaxws</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-transports-http</artifactId>
-        </dependency>
-        <!-- Jackson dependencies for JSON processing -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <!-- RestTemplate dependency -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-    </dependencies>
+    Error:
+      type: object
+      properties:
+        errorCode:
+          type: string
+        errorDescription:
+          type: string
+      required:
+        - errorCode
+        - errorDescription
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.cxf</groupId>
-                <artifactId>cxf-codegen-plugin</artifactId>
-                <version>${cxf.version}</version>
-                <executions>
-                    <execution>
-                        <id>generate-sources</id>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <sourceRoot>${project.build.directory}/generated-sources</sourceRoot>
-                            <wsdlOptions>
-                                <wsdlOption>
-                                    <wsdl>http://www.dneonline.com/calculator.asmx?wsdl</wsdl>
-                                </wsdlOption>
-                            </wsdlOptions>
-                        </configuration>
-                        <goals>
-                            <goal>wsdl2java</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>copy-resources</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/generated-sources</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.build.directory}/generated-sources</directory>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-</project>
+  parameters:
+    providerIdPathParam:
+      name: providerId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: The unique provider ID
+
+    productTypeQueryParam:
+      name: productType
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [ISA, GIA, SIPP]
+      description: The type of product (optional)
