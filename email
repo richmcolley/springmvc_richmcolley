@@ -1,1 +1,100 @@
+{
+  "providerId": "provider123",
+  "records": [
+    {
+      "productType": "ISA",
+      "transferTypes": [
+        {
+          "transferType": "RI",
+          "regexPatterns": [
+            {
+              "regexPattern": "^\\d{3}$",
+              "regexStatement": "Three digit pattern"
+            },
+            {
+              "regexPattern": "^\\d{4}$",
+              "regexStatement": "Four digit pattern"
+            }
+          ]
+        },
+        {
+          "transferType": "TI",
+          "regexPatterns": [
+            {
+              "regexPattern": "^\\d{3}$",
+              "regexStatement": "Three digit pattern"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "productType": "GIA",
+      "transferTypes": [
+        {
+          "transferType": "RI",
+          "regexPatterns": [
+            {
+              "regexPattern": "^\\d{5}$",
+              "regexStatement": "Five digit pattern"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "productType": "SIPP",
+      "transferTypes": [
+        {
+          "transferType": "TI",
+          "regexPatterns": [
+            {
+              "regexPattern": "^\\d{6}$",
+              "regexStatement": "Six digit pattern"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
 
+
+
+
+
+
+
+
+{
+  "providerId": "provider123",
+  "records": [
+    {
+      "productType": "ISA",
+      "transferTypes": [
+        {
+          "transferType": "RI",
+          "regexPatterns": [
+            {
+              "regexPattern": "^\\d{3}$",
+              "regexStatement": "Three digit pattern"
+            },
+            {
+              "regexPattern": "^\\d{4}$",
+              "regexStatement": "Four digit pattern"
+            }
+          ]
+        },
+        {
+          "transferType": "TI",
+          "regexPatterns": [
+            {
+              "regexPattern": "^\\d{3}$",
+              "regexStatement": "Three digit pattern"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
