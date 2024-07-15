@@ -98,3 +98,32 @@
     }
   ]
 }
+
+
+
+
+
+CREATE TABLE ProviderProductDetails (
+    providerId VARCHAR(255) NOT NULL,
+    productType VARCHAR(50) NOT NULL,
+    transferType VARCHAR(50) NOT NULL,
+    regexPattern TEXT NOT NULL,
+    regexStatement TEXT NOT NULL,
+    PRIMARY KEY (providerId, productType, transferType, regexPattern)
+);
+
+-- Adding some constraints to ensure data integrity
+ALTER TABLE ProviderProductDetails
+    ADD CONSTRAINT chk_productType CHECK (productType IN ('ISA', 'GIA', 'SIPP'));
+
+ALTER TABLE ProviderProductDetails
+    ADD CONSTRAINT chk_transferType CHECK (transferType IN ('RI', 'TI'));
+
+-- Example of inserting data
+INSERT INTO ProviderProductDetails (providerId, productType, transferType, regexPattern, regexStatement) VALUES 
+('provider123', 'ISA', 'RI', '^\\d{3}$', 'Three digit pattern'),
+('provider123', 'ISA', 'RI', '^\\d{4}$', 'Four digit pattern'),
+('provider123', 'ISA', 'TI', '^\\d{3}$', 'Three digit pattern'),
+('provider123', 'GIA', 'RI', '^\\d{5}$', 'Five digit pattern'),
+('provider123', 'SIPP', 'TI', '^\\d{6}$', 'Six digit pattern');
+
