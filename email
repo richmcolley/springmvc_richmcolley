@@ -1,11 +1,1 @@
 
-CREATE TABLE config_rules (
-    rule_id INT PRIMARY KEY AUTO_INCREMENT,
-    project_name VARCHAR(100) NOT NULL,
-    rule_category VARCHAR(100) NOT NULL,
-    rule_key VARCHAR(255) NOT NULL,
-    rule_value VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE(project_name, rule_category, rule_key)
-);
