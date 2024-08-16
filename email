@@ -1,71 +1,57 @@
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.security.cert.X509Certificate;
-import java.util.Base64;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
 
-public class ApiService {
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 
-    private final HttpClient httpClient;
-    private final ObjectMapper objectMapper;
-    private final String authHeader;
+@Repository
+public class ConfigRuleJdbcRepository {
 
-    public ApiService(String username, String password) throws Exception {
-        // Create a TrustManager that trusts all certificates (SSL Bypass)
-        TrustManager[] trustAllCerts = new TrustManager[]{
-            new X509TrustManager() {
-                public X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
+    private final JdbcTemplate jdbcTemplate;
 
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                }
-
-                public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                }
-            }
-        };
-
-        // Initialize an SSLContext to use the TrustManager
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
-
-        // Create HttpClient with the custom SSLContext
-        this.httpClient = HttpClient.newBuilder()
-                .sslContext(sslContext)
-                .build();
-
-        // ObjectMapper for JSON to Java object mapping
-        this.objectMapper = new ObjectMapper();
-
-        // Set up Basic Authentication header
-        String auth = username + ":" + password;
-        this.authHeader = "Basic " + Base64.getEncoder().encodeToString(auth.getBytes());
+    public ConfigRuleJdbcRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
-    public ApiResponse callApi(String zreference) throws Exception {
-        // Build HttpRequest for the given zreference with Basic Auth
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.example.com/data/" + zreference))
-                .GET()
-                .header("Accept", "application/json")
-                .header("Authorization", authHeader)
-                .build();
+    // Method to retrieve all ConfigRules for a specific project name
+    public List<ConfigRule> findByProjectName(String projectName) {
+        String sql = "SELECT * FROM config_rules WHERE project_name = ?";
+        return jdbcTemplate.query(sql, new Object[]{projectName}, new ConfigRuleRowMapper());
+    }
 
-        // Send the request and get the response
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    // Method to insert a new ConfigRule
+    public int save(ConfigRule configRule) {
+        String sql = "INSERT INTO config_rules (project_name, rule_category, rule_key, rule_value) VALUES (?, ?, ?, ?)";
+        return jdbcTemplate.update(sql, configRule.getProjectName(), configRule.getRuleCategory(), configRule.getRuleKey(), configRule.getRuleValue());
+    }
 
-        // Check if the response was successful
-        if (response.statusCode() == 200) {
-            // Map the response body to ApiResponse class
-            return objectMapper.readValue(response.body(), ApiResponse.class);
-        } else {
-            throw new RuntimeException("API call failed with status code: " + response.statusCode());
+    // Method to update an existing ConfigRule
+    public int update(ConfigRule configRule) {
+        String sql = "UPDATE config_rules SET rule_category = ?, rule_key = ?, rule_value = ? WHERE rule_id = ?";
+        return jdbcTemplate.update(sql, configRule.getRuleCategory(), configRule.getRuleKey(), configRule.getRuleValue(), configRule.getRuleId());
+    }
+
+    // Method to delete a ConfigRule by ID
+    public int deleteById(int ruleId) {
+        String sql = "DELETE FROM config_rules WHERE rule_id = ?";
+        return jdbcTemplate.update(sql, ruleId);
+    }
+
+    // RowMapper implementation to map ResultSet to ConfigRule object
+    private static class ConfigRuleRowMapper implements RowMapper<ConfigRule> {
+        @Override
+        public ConfigRule mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return new ConfigRule(
+                rs.getInt("rule_id"),
+                rs.getString("project_name"),
+                rs.getString("rule_category"),
+                rs.getString("rule_key"),
+                rs.getString("rule_value"),
+                rs.getTimestamp("created_at"),
+                rs.getTimestamp("updated_at")
+            );
         }
     }
 }
