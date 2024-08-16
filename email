@@ -1,24 +1,22 @@
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.web.client.RestTemplate;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.security.cert.X509Certificate;
+import java.util.Base64;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.security.cert.X509Certificate;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Configuration
-public class RestTemplateConfig {
+public class ApiService {
 
-    @Bean
-    public RestTemplate restTemplate() throws Exception {
-        // Create a trust manager that does not validate certificate chains
+    private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
+    private final String authHeader;
+
+    public ApiService(String username, String password) throws Exception {
+        // Create a TrustManager that trusts all certificates (SSL Bypass)
         TrustManager[] trustAllCerts = new TrustManager[]{
             new X509TrustManager() {
                 public X509Certificate[] getAcceptedIssuers() {
@@ -33,27 +31,41 @@ public class RestTemplateConfig {
             }
         };
 
-        // Install the all-trusting trust manager
+        // Initialize an SSLContext to use the TrustManager
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
 
-        // Create an all-trusting host name verifier
-        HostnameVerifier allHostsValid = (hostname, session) -> true;
+        // Create HttpClient with the custom SSLContext
+        this.httpClient = HttpClient.newBuilder()
+                .sslContext(sslContext)
+                .build();
 
-        HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
-        HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+        // ObjectMapper for JSON to Java object mapping
+        this.objectMapper = new ObjectMapper();
 
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory() {
-            @Override
-            protected void prepareConnection(HttpURLConnection connection, String httpMethod) throws IOException {
-                if (connection instanceof HttpsURLConnection) {
-                    ((HttpsURLConnection) connection).setSSLSocketFactory(sslContext.getSocketFactory());
-                    ((HttpsURLConnection) connection).setHostnameVerifier(allHostsValid);
-                }
-                super.prepareConnection(connection, httpMethod);
-            }
-        };
+        // Set up Basic Authentication header
+        String auth = username + ":" + password;
+        this.authHeader = "Basic " + Base64.getEncoder().encodeToString(auth.getBytes());
+    }
 
-        return new RestTemplate(requestFactory);
+    public ApiResponse callApi(String zreference) throws Exception {
+        // Build HttpRequest for the given zreference with Basic Auth
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.example.com/data/" + zreference))
+                .GET()
+                .header("Accept", "application/json")
+                .header("Authorization", authHeader)
+                .build();
+
+        // Send the request and get the response
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        // Check if the response was successful
+        if (response.statusCode() == 200) {
+            // Map the response body to ApiResponse class
+            return objectMapper.readValue(response.body(), ApiResponse.class);
+        } else {
+            throw new RuntimeException("API call failed with status code: " + response.statusCode());
+        }
     }
 }
