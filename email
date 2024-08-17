@@ -1,9 +1,39 @@
-# H2 Database Configuration
-spring.datasource.url=jdbc:h2:mem:testdb
-spring.datasource.driverClassName=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=password
-spring.h2.console.enabled=true
-spring.h2.console.path=/h2-console
-spring.jpa.hibernate.ddl-auto=update
-spring.datasource.platform=h2
+// Method to batch insert ConfigRules
+    public int[] saveAll(List<ConfigRule> configRules) {
+        String sql = "INSERT INTO config_rules (project_name, rule_category, rule_key, rule_value) VALUES (?, ?, ?, ?)";
+        return jdbcTemplate.batchUpdate(sql, configRules, configRules.size(), (ps, configRule) -> {
+            ps.setString(1, configRule.getProjectName());
+            ps.setString(2, configRule.getRuleCategory());
+            ps.setString(3, configRule.getRuleKey());
+            ps.setString(4, configRule.getRuleValue());
+        });
+    }
+
+
+
+
+
+// Endpoint to insert multiple ConfigRules in one call
+    @PostMapping("/add-batch")
+    public ResponseEntity<String> addConfigRulesBatch(@RequestBody List<ConfigRule> configRules) {
+        int[] rowsAffected = configRuleJdbcRepository.saveAll(configRules);
+        if (rowsAffected.length == configRules.size()) {
+            return ResponseEntity.status(HttpStatus.CREATED).body("ConfigRules added successfully!");
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to add some ConfigRules.");
+        }
+    }
+
+
+
+
+[
+    {"projectName": "ProjectA", "ruleCategory": "payment", "ruleKey": "Provider A", "ruleValue": "FALSE"},
+    {"projectName": "ProjectA", "ruleCategory": "payment", "ruleKey": "Provider B", "ruleValue": "TRUE"},
+    {"projectName": "ProjectA", "ruleCategory": "threshold", "ruleKey": "Provider B", "ruleValue": "1000.00"},
+    {"projectName": "ProjectA", "ruleCategory": "payment", "ruleKey": "Provider C", "ruleValue": "TRUE"},
+    {"projectName": "ProjectA", "ruleCategory": "threshold", "ruleKey": "Provider C", "ruleValue": "500.00"},
+    {"projectName": "ProjectA", "ruleCategory": "payment", "ruleKey": "Provider D", "ruleValue": "FALSE"},
+    {"projectName": "ProjectB", "ruleCategory": "authentication", "ruleKey": "MaxAttempts", "ruleValue": "5"},
+    {"projectName": "ProjectB", "ruleCategory": "authentication", "ruleKey": "LockoutDuration", "ruleValue": "30"}
+]
