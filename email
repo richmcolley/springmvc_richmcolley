@@ -297,3 +297,64 @@ public class CsvProcessingException extends RuntimeException {
 
 
 
+
+
+
+
+import java.math.BigDecimal;
+import java.util.List;
+
+public class CsvProcessingService {
+
+    private final List<ConfigRule> configRules;
+
+    public CsvProcessingService(List<ConfigRule> configRules) {
+        this.configRules = configRules;
+    }
+
+    private boolean shouldExcludeBasedOnThreshold(CsvRecord record) {
+        for (ConfigRule rule : configRules) {
+            if ("threshold".equalsIgnoreCase(rule.getRuleCategory()) 
+                    && rule.getRuleKey().equals(record.getZReference())
+                    && Constants.PROCESS_NAME_MO.equalsIgnoreCase(rule.getProjectName())) {
+                
+                BigDecimal thresholdValue = new BigDecimal(rule.getRuleValue());
+                BigDecimal amount = new BigDecimal(record.getAmount());
+                
+                if (amount.compareTo(thresholdValue) > 0) {
+                    record.setReason("Amount exceeds threshold value for Z_REFERENCE: " + record.getZReference());
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean shouldExcludeBasedOnPaymentSupport(CsvRecord record) {
+        for (ConfigRule rule : configRules) {
+            if ("payment".equalsIgnoreCase(rule.getRuleCategory()) 
+                    && rule.getRuleKey().equals(record.getZReference())
+                    && Constants.PROCESS_NAME_MO.equalsIgnoreCase(rule.getProjectName())) {
+                
+                if ("FALSE".equalsIgnoreCase(rule.getRuleValue())) {
+                    record.setReason("Payment not supported for Z_REFERENCE: " + record.getZReference());
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void processCsv(List<CsvRecord> records) {
+        for (CsvRecord record : records) {
+            // Apply exclusion rules
+            if (shouldExcludeBasedOnThreshold(record) || shouldExcludeBasedOnPaymentSupport(record)) {
+                record.setStatus(Constants.STATUS_EXCLUDED);
+            } else {
+                record.setStatus(Constants.STATUS_SUCCESS);
+                // Further processing...
+            }
+        }
+    }
+}
+
