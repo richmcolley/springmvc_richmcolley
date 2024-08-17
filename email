@@ -358,3 +358,37 @@ public class CsvProcessingService {
     }
 }
 
+
+
+
+
+
+
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+public class CsvProcessingService {
+
+    // Exclusion based on provider name comparison
+    public List<CsvRecord> excludeMismatchedProviderRecords(List<CsvRecord> csvRecords, List<AssetDetails> assetDetailsList) {
+        // Convert AssetDetails list to a map for quick lookup by zRef
+        Map<String, String> assetMap = assetDetailsList.stream()
+                .collect(Collectors.toMap(AssetDetails::getZRef, AssetDetails::getProviderName));
+
+        // Filter and update records
+        return csvRecords.stream()
+                .peek(record -> {
+                    String assetProviderName = assetMap.get(record.getZReference());
+                    if (assetProviderName != null && !assetProviderName.equalsIgnoreCase(record.getProviderName())) {
+                        record.setStatus(Status.EXCLUDED);
+                        record.setReason(String.format("Provider name mismatch: Expected %s, found %s", 
+                                                       assetProviderName, record.getProviderName()));
+                    }
+                })
+                .filter(record -> !Status.EXCLUDED.equals(record.getStatus()))
+                .collect(Collectors.toList());
+    }
+}
+
