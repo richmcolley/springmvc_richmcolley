@@ -1,15 +1,18 @@
 // Method to batch insert ConfigRules
     public int[] saveAll(List<ConfigRule> configRules) {
-        String sql = "INSERT INTO config_rules (project_name, rule_category, rule_key, rule_value) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO config_rules (project_name, rule_category, rule_key, rule_value, created_at, created_by, updated_at, updated_by) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         return jdbcTemplate.batchUpdate(sql, configRules, configRules.size(), (ps, configRule) -> {
             ps.setString(1, configRule.getProjectName());
             ps.setString(2, configRule.getRuleCategory());
             ps.setString(3, configRule.getRuleKey());
             ps.setString(4, configRule.getRuleValue());
+            ps.setTimestamp(5, configRule.getCreatedAt());
+            ps.setString(6, configRule.getCreatedBy());
+            ps.setTimestamp(7, configRule.getUpdatedAt());
+            ps.setString(8, configRule.getUpdatedBy());
         });
     }
-
-
 
 
 
@@ -27,13 +30,85 @@
 
 
 
-[
-    {"projectName": "ProjectA", "ruleCategory": "payment", "ruleKey": "Provider A", "ruleValue": "FALSE"},
-    {"projectName": "ProjectA", "ruleCategory": "payment", "ruleKey": "Provider B", "ruleValue": "TRUE"},
-    {"projectName": "ProjectA", "ruleCategory": "threshold", "ruleKey": "Provider B", "ruleValue": "1000.00"},
-    {"projectName": "ProjectA", "ruleCategory": "payment", "ruleKey": "Provider C", "ruleValue": "TRUE"},
-    {"projectName": "ProjectA", "ruleCategory": "threshold", "ruleKey": "Provider C", "ruleValue": "500.00"},
-    {"projectName": "ProjectA", "ruleCategory": "payment", "ruleKey": "Provider D", "ruleValue": "FALSE"},
-    {"projectName": "ProjectB", "ruleCategory": "authentication", "ruleKey": "MaxAttempts", "ruleValue": "5"},
-    {"projectName": "ProjectB", "ruleCategory": "authentication", "ruleKey": "LockoutDuration", "ruleValue": "30"}
+
+    {
+        "projectName": "ProjectA",
+        "ruleCategory": "payment",
+        "ruleKey": "Provider A",
+        "ruleValue": "FALSE",
+        "createdAt": "2024-08-17T10:00:00",
+        "createdBy": "Admin",
+        "updatedAt": "2024-08-17T10:00:00",
+        "updatedBy": "Admin"
+    },
+    {
+        "projectName": "ProjectA",
+        "ruleCategory": "payment",
+        "ruleKey": "Provider B",
+        "ruleValue": "TRUE",
+        "createdAt": "2024-08-17T10:00:00",
+        "createdBy": "Admin",
+        "updatedAt": "2024-08-17T10:00:00",
+        "updatedBy": "Admin"
+    },
+    {
+        "projectName": "ProjectA",
+        "ruleCategory": "threshold",
+        "ruleKey": "Provider B",
+        "ruleValue": "1000.00",
+        "createdAt": "2024-08-17T10:00:00",
+        "createdBy": "Admin",
+        "updatedAt": "2024-08-17T10:00:00",
+        "updatedBy": "Admin"
+    },
+    {
+        "projectName": "ProjectA",
+        "ruleCategory": "payment",
+        "ruleKey": "Provider C",
+        "ruleValue": "TRUE",
+        "createdAt": "2024-08-17T10:00:00",
+        "createdBy": "Admin",
+        "updatedAt": "2024-08-17T10:00:00",
+        "updatedBy": "Admin"
+    },
+    {
+        "projectName": "ProjectA",
+        "ruleCategory": "threshold",
+        "ruleKey": "Provider C",
+        "ruleValue": "500.00",
+        "createdAt": "2024-08-17T10:00:00",
+        "createdBy": "Admin",
+        "updatedAt": "2024-08-17T10:00:00",
+        "updatedBy": "Admin"
+    },
+    {
+        "projectName": "ProjectA",
+        "ruleCategory": "payment",
+        "ruleKey": "Provider D",
+        "ruleValue": "FALSE",
+        "createdAt": "2024-08-17T10:00:00",
+        "createdBy": "Admin",
+        "updatedAt": "2024-08-17T10:00:00",
+        "updatedBy": "Admin"
+    },
+    {
+        "projectName": "ProjectB",
+        "ruleCategory": "authentication",
+        "ruleKey": "MaxAttempts",
+        "ruleValue": "5",
+        "createdAt": "2024-08-17T10:00:00",
+        "createdBy": "Admin",
+        "updatedAt": "2024-08-17T10:00:00",
+        "updatedBy": "Admin"
+    },
+    {
+        "projectName": "ProjectB",
+        "ruleCategory": "authentication",
+        "ruleKey": "LockoutDuration",
+        "ruleValue": "30",
+        "createdAt": "2024-08-17T10:00:00",
+        "createdBy": "Admin",
+        "updatedAt": "2024-08-17T10:00:00",
+        "updatedBy": "Admin"
+    }
 ]
