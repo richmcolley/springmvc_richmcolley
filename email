@@ -1,57 +1,9 @@
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Repository;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-
-@Repository
-public class ConfigRuleJdbcRepository {
-
-    private final JdbcTemplate jdbcTemplate;
-
-    public ConfigRuleJdbcRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
-
-    // Method to retrieve all ConfigRules for a specific project name
-    public List<ConfigRule> findByProjectName(String projectName) {
-        String sql = "SELECT * FROM config_rules WHERE project_name = ?";
-        return jdbcTemplate.query(sql, new Object[]{projectName}, new ConfigRuleRowMapper());
-    }
-
-    // Method to insert a new ConfigRule
-    public int save(ConfigRule configRule) {
-        String sql = "INSERT INTO config_rules (project_name, rule_category, rule_key, rule_value) VALUES (?, ?, ?, ?)";
-        return jdbcTemplate.update(sql, configRule.getProjectName(), configRule.getRuleCategory(), configRule.getRuleKey(), configRule.getRuleValue());
-    }
-
-    // Method to update an existing ConfigRule
-    public int update(ConfigRule configRule) {
-        String sql = "UPDATE config_rules SET rule_category = ?, rule_key = ?, rule_value = ? WHERE rule_id = ?";
-        return jdbcTemplate.update(sql, configRule.getRuleCategory(), configRule.getRuleKey(), configRule.getRuleValue(), configRule.getRuleId());
-    }
-
-    // Method to delete a ConfigRule by ID
-    public int deleteById(int ruleId) {
-        String sql = "DELETE FROM config_rules WHERE rule_id = ?";
-        return jdbcTemplate.update(sql, ruleId);
-    }
-
-    // RowMapper implementation to map ResultSet to ConfigRule object
-    private static class ConfigRuleRowMapper implements RowMapper<ConfigRule> {
-        @Override
-        public ConfigRule mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return new ConfigRule(
-                rs.getInt("rule_id"),
-                rs.getString("project_name"),
-                rs.getString("rule_category"),
-                rs.getString("rule_key"),
-                rs.getString("rule_value"),
-                rs.getTimestamp("created_at"),
-                rs.getTimestamp("updated_at")
-            );
-        }
-    }
-}
+# H2 Database Configuration
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=password
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+spring.jpa.hibernate.ddl-auto=update
+spring.datasource.platform=h2
