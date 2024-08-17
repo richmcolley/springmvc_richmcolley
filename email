@@ -1,114 +1,299 @@
-// Method to batch insert ConfigRules
-    public int[] saveAll(List<ConfigRule> configRules) {
-        String sql = "INSERT INTO config_rules (project_name, rule_category, rule_key, rule_value, created_at, created_by, updated_at, updated_by) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        return jdbcTemplate.batchUpdate(sql, configRules, configRules.size(), (ps, configRule) -> {
-            ps.setString(1, configRule.getProjectName());
-            ps.setString(2, configRule.getRuleCategory());
-            ps.setString(3, configRule.getRuleKey());
-            ps.setString(4, configRule.getRuleValue());
-            ps.setTimestamp(5, configRule.getCreatedAt());
-            ps.setString(6, configRule.getCreatedBy());
-            ps.setTimestamp(7, configRule.getUpdatedAt());
-            ps.setString(8, configRule.getUpdatedBy());
-        });
+csv-processing/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   ├── com/
+│   │   │   │   ├── example/
+│   │   │   │   │   ├── CsvProcessingApplication.java
+│   │   │   │   │   ├── config/
+│   │   │   │   │   │   ├── AppConfig.java
+│   │   │   │   │   ├── model/
+│   │   │   │   │   │   ├── CsvRecord.java
+│   │   │   │   │   │   ├── ValidationResponse.java
+│   │   │   │   │   │   ├── ErrorResponse.java
+│   │   │   │   │   ├── service/
+│   │   │   │   │   │   ├── CsvProcessingService.java
+│   │   │   │   │   │   ├── RuleService.java
+│   │   │   │   │   ├── repository/
+│   │   │   │   │   │   ├── ConfigRulesRepository.java
+│   │   │   │   │   │   ├── FileStatusRepository.java
+│   │   │   │   │   │   ├── ValidationTableRepository.java
+│   │   │   │   │   ├── util/
+│   │   │   │   │   │   ├── CsvUtils.java
+│   │   │   │   │   │   ├── EmailUtils.java
+│   │   │   │   │   ├── exception/
+│   │   │   │   │   │   ├── CsvProcessingException.java
+│   │   │   │   │   │   ├── ExclusionRuleException.java
+│   │   │   │   │   │   ├── DuplicateRecordException.java
+│   │   │   │   │   └── rest/
+│   │   │   │   │       ├── ZRefApiClient.java
+│   │   │   │   │       ├── MoneyApiClient.java
+│   │   │   ├── resources/
+│   │   │       ├── application.properties
+│   │   │       └── logback.xml
+└── pom.xml
+
+
+
+
+package com.example.model;
+
+public class CsvRecord {
+    private String account;
+    private String productType;
+    private double amount;
+    private String nino;
+    private int totalUnits;
+    private String paymentMethod;
+    private String sortCode;
+    private String bankAcctNumber;
+    private String providerName;
+    private String zReference;
+    private String paymentReference;
+    private String rspWdpDetails;
+
+    // Getters and Setters
+
+@Override
+    public String toString() {
+        return account + "," + productType + "," + amount + "," + nino + "," + totalUnits + "," +
+               paymentMethod + "," + sortCode + "," + bankAcctNumber + "," + providerName + "," +
+               zReference + "," + paymentReference + "," + rspWdpDetails + "," + status + "," + reason;
     }
+}
 
 
 
-// Endpoint to insert multiple ConfigRules in one call
-    @PostMapping("/add-batch")
-    public ResponseEntity<String> addConfigRulesBatch(@RequestBody List<ConfigRule> configRules) {
-        int[] rowsAffected = configRuleJdbcRepository.saveAll(configRules);
-        if (rowsAffected.length == configRules.size()) {
-            return ResponseEntity.status(HttpStatus.CREATED).body("ConfigRules added successfully!");
-        } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to add some ConfigRules.");
+
+
+
+
+package com.example.service;
+
+import com.example.model.CsvRecord;
+import com.example.repository.ConfigRulesRepository;
+import com.example.repository.FileStatusRepository;
+import com.example.repository.ValidationTableRepository;
+import com.example.rest.MoneyApiClient;
+import com.example.rest.ZRefApiClient;
+import com.example.util.CsvUtils;
+import com.example.util.EmailUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+public class CsvProcessingService {
+
+    @Autowired
+    private ConfigRulesRepository configRulesRepository;
+
+    @Autowired
+    private FileStatusRepository fileStatusRepository;
+
+    @Autowired
+    private ValidationTableRepository validationTableRepository;
+
+    @Autowired
+    private ZRefApiClient zRefApiClient;
+
+    @Autowired
+    private MoneyApiClient moneyApiClient;
+
+    public void processCsvFile(String s3FilePath) {
+        List<CsvRecord> records;
+        List<CsvRecord> excludedRecords = new ArrayList<>();
+        List<CsvRecord> validRecords = new ArrayList<>();
+        List<CsvRecord> failedRecords = new ArrayList<>();
+        Map<String, CsvRecord> duplicateRecords = null;
+
+        try {
+            records = CsvUtils.parseCsvToModel(s3FilePath);
+        } catch (Exception e) {
+            sendFailureEmail(s3FilePath, "Error parsing CSV file: " + e.getMessage(), excludedRecords);
+            return;
+        }
+
+        try {
+            validateSchema(records);
+        } catch (Exception e) {
+            sendFailureEmail(s3FilePath, "Schema validation failed: " + e.getMessage(), excludedRecords);
+            return;
+        }
+
+        try {
+            duplicateRecords = checkForDuplicateRecords(records);
+            if (!duplicateRecords.isEmpty()) {
+                sendFailureEmail(s3FilePath, "Duplicate records found in the CSV file.", new ArrayList<>(duplicateRecords.values()));
+                return;
+            }
+        } catch (Exception e) {
+            sendFailureEmail(s3FilePath, "Error checking for duplicate records: " + e.getMessage(), excludedRecords);
+            return;
+        }
+
+        try {
+            applyExclusionRules(records, excludedRecords);
+        } catch (Exception e) {
+            sendFailureEmail(s3FilePath, "Error applying exclusion rules: " + e.getMessage(), excludedRecords);
+            return;
+        }
+
+        // Filter out excluded records to get valid records
+        validRecords = records.stream()
+            .filter(record -> "SUCCESS".equals(record.getStatus()))
+            .collect(Collectors.toList());
+
+        try {
+            processRecords(validRecords, failedRecords);
+            saveResults(validRecords, failedRecords);
+        } catch (Exception e) {
+            sendFailureEmail(s3FilePath, "Error processing records: " + e.getMessage(), excludedRecords);
+            return;
+        }
+
+        try {
+            CsvUtils.writeCsvWithStatusAndReason(s3FilePath, records); // Update CSV with status and reason
+            EmailUtils.sendEmailWithCsvReport(s3FilePath, validRecords, excludedRecords, failedRecords);
+        } catch (Exception e) {
+            throw new CsvProcessingException("Error sending email: " + e.getMessage());
         }
     }
 
-
-
-
-
-    {
-        "projectName": "ProjectA",
-        "ruleCategory": "payment",
-        "ruleKey": "Provider A",
-        "ruleValue": "FALSE",
-        "createdAt": "2024-08-17T10:00:00",
-        "createdBy": "Admin",
-        "updatedAt": "2024-08-17T10:00:00",
-        "updatedBy": "Admin"
-    },
-    {
-        "projectName": "ProjectA",
-        "ruleCategory": "payment",
-        "ruleKey": "Provider B",
-        "ruleValue": "TRUE",
-        "createdAt": "2024-08-17T10:00:00",
-        "createdBy": "Admin",
-        "updatedAt": "2024-08-17T10:00:00",
-        "updatedBy": "Admin"
-    },
-    {
-        "projectName": "ProjectA",
-        "ruleCategory": "threshold",
-        "ruleKey": "Provider B",
-        "ruleValue": "1000.00",
-        "createdAt": "2024-08-17T10:00:00",
-        "createdBy": "Admin",
-        "updatedAt": "2024-08-17T10:00:00",
-        "updatedBy": "Admin"
-    },
-    {
-        "projectName": "ProjectA",
-        "ruleCategory": "payment",
-        "ruleKey": "Provider C",
-        "ruleValue": "TRUE",
-        "createdAt": "2024-08-17T10:00:00",
-        "createdBy": "Admin",
-        "updatedAt": "2024-08-17T10:00:00",
-        "updatedBy": "Admin"
-    },
-    {
-        "projectName": "ProjectA",
-        "ruleCategory": "threshold",
-        "ruleKey": "Provider C",
-        "ruleValue": "500.00",
-        "createdAt": "2024-08-17T10:00:00",
-        "createdBy": "Admin",
-        "updatedAt": "2024-08-17T10:00:00",
-        "updatedBy": "Admin"
-    },
-    {
-        "projectName": "ProjectA",
-        "ruleCategory": "payment",
-        "ruleKey": "Provider D",
-        "ruleValue": "FALSE",
-        "createdAt": "2024-08-17T10:00:00",
-        "createdBy": "Admin",
-        "updatedAt": "2024-08-17T10:00:00",
-        "updatedBy": "Admin"
-    },
-    {
-        "projectName": "ProjectB",
-        "ruleCategory": "authentication",
-        "ruleKey": "MaxAttempts",
-        "ruleValue": "5",
-        "createdAt": "2024-08-17T10:00:00",
-        "createdBy": "Admin",
-        "updatedAt": "2024-08-17T10:00:00",
-        "updatedBy": "Admin"
-    },
-    {
-        "projectName": "ProjectB",
-        "ruleCategory": "authentication",
-        "ruleKey": "LockoutDuration",
-        "ruleValue": "30",
-        "createdAt": "2024-08-17T10:00:00",
-        "createdBy": "Admin",
-        "updatedAt": "2024-08-17T10:00:00",
-        "updatedBy": "Admin"
+    private void validateSchema(List<CsvRecord> records) {
+        // Implement schema validation logic here
+        for (CsvRecord record : records) {
+            // Example validation (replace with real validation)
+            if (record.getAccount() == null || record.getAmount() <= 0) {
+                record.setStatus("FAILED");
+                record.setReason("Schema validation failed");
+                throw new RuntimeException("Schema validation failed for one or more records");
+            }
+        }
     }
-]
+
+    private Map<String, CsvRecord> checkForDuplicateRecords(List<CsvRecord> records) {
+        // Implement logic to check for duplicate records in DynamoDB
+        return Map.of(); // Placeholder
+    }
+
+    private void applyExclusionRules(List<CsvRecord> records, List<CsvRecord> excludedRecords) {
+        for (CsvRecord record : records) {
+            boolean isExcluded = false;
+            String reason = "";
+
+            // Rule 1: Exclude 'Regular-' or 'Start Canc' string from RSP_WDP_DETAILS
+            if (record.getRspWdpDetails().contains("Regular-") || record.getRspWdpDetails().contains("Start Canc")) {
+                isExcluded = true;
+                reason = "Excluded due to RSP_WDP_DETAILS containing 'Regular-' or 'Start Canc'";
+            }
+
+            // Add other exclusion rules similarly...
+
+            if (isExcluded) {
+                record.setStatus("EXCLUDED");
+                record.setReason(reason);
+                excludedRecords.add(record);
+            } else {
+                record.setStatus("SUCCESS");
+            }
+        }
+    }
+
+    private void processRecords(List<CsvRecord> validRecords, List<CsvRecord> failedRecords) {
+        for (CsvRecord record : validRecords) {
+            try {
+                // Call MoneyAPI to place transactions
+                moneyApiClient.processTransaction(record);
+            } catch (Exception e) {
+                record.setStatus("FAILED");
+                record.setReason("Failed to process transaction: " + e.getMessage());
+                failedRecords.add(record);
+            }
+        }
+    }
+
+    private void saveResults(List<CsvRecord> validRecords, List<CsvRecord> failedRecords) {
+        // Implement logic to save records in DynamoDB
+    }
+
+    private void sendFailureEmail(String s3FilePath, String errorMessage, List<CsvRecord> excludedRecords) {
+        try {
+            CsvUtils.writeCsvWithStatusAndReason(s3FilePath, excludedRecords);
+            EmailUtils.sendEmailWithCsvReport(s3FilePath, List.of(), excludedRecords, List.of());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send failure email: " + e.getMessage());
+        }
+    }
+}
+
+
+
+
+
+
+
+package com.example.util;
+
+import com.example.model.CsvRecord;
+
+import java.io.*;
+import java.nio.file.*;
+import java.util.List;
+
+public class CsvUtils {
+
+    public static void writeCsvWithStatusAndReason(String filePath, List<CsvRecord> records) throws IOException {
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(filePath))) {
+            for (CsvRecord record : records) {
+                writer.write(record.toString());
+                writer.newLine();
+            }
+        }
+    }
+
+    public static List<CsvRecord> parseCsvToModel(String s3FilePath) throws IOException {
+        // Implement CSV parsing logic here
+        // Return a list of CsvRecord objects
+        return List.of(); // Placeholder
+    }
+}
+
+
+
+
+
+
+package com.example.util;
+
+import com.example.model.CsvRecord;
+
+import java.util.List;
+
+public class EmailUtils {
+
+    public static void sendEmailWithCsvReport(String s3FilePath, List<CsvRecord> validRecords,
+                                              List<CsvRecord> excludedRecords, List<CsvRecord> failedRecords) {
+        // Implement email sending logic here
+        // Attach CSV file and include status details in the email
+    }
+}
+
+
+
+
+
+package com.example.exception;
+
+public class CsvProcessingException extends RuntimeException {
+    public CsvProcessingException(String message) {
+        super(message);
+    }
+}
+
+
+
