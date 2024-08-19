@@ -3,3 +3,5 @@ keytool -genkeypair -alias mycert -keyalg RSA -keysize 2048 -validity 365 -keyst
 sudo keytool -import -trustcacerts -file mycert.crt -alias mycert -keystore /path/to/java/jre/lib/security/cacerts
 
 keytool -list -keystore /path/to/java/jre/lib/security/cacerts
+
+keytool -exportcert -alias mycert -file mycert.crt -keystore mykeystore.jks
