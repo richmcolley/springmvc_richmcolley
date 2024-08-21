@@ -1,7 +1,84 @@
-keytool -genkeypair -alias mycert -keyalg RSA -keysize 2048 -validity 365 -keystore mykeystore.jks
+import java.io.StringWriter;
+import java.util.List;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 
-sudo keytool -import -trustcacerts -file mycert.crt -alias mycert -keystore /path/to/java/jre/lib/security/cacerts
+public String convertToCSV(List<MyModel> models) throws IOException {
+    StringWriter writer = new StringWriter();
+    CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
+            .withHeader("Field1", "Field2", "Field3")); // Add headers here
 
-keytool -list -keystore /path/to/java/jre/lib/security/cacerts
+    for (MyModel model : models) {
+        csvPrinter.printRecord(model.getField1(), model.getField2(), model.isField3());
+    }
 
-keytool -exportcert -alias mycert -file mycert.crt -keystore mykeystore.jks
+    csvPrinter.flush();
+    return writer.toString();
+}
+
+
+
+
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+
+@Service
+public class EmailService {
+
+    @Autowired
+    private JavaMailSender mailSender;
+
+    public void sendEmailWithAttachment(String to, String subject, String body, String csvContent) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(body);
+
+        helper.addAttachment("combined_list.csv", new ByteArrayResource(csvContent.getBytes()));
+
+        mailSender.send(message);
+    }
+}
+
+
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import javax.mail.MessagingException;
+import java.io.IOException;
+import java.util.List;
+
+@Service
+public class MyService {
+
+    @Autowired
+    private EmailService emailService;
+
+    public void processAndSendEmail(List<MyModel> list1, List<MyModel> list2) throws IOException, MessagingException {
+        // Combine the lists
+        List<MyModel> combinedList = new ArrayList<>();
+        combinedList.addAll(list1);
+        combinedList.addAll(list2);
+
+        // Convert to CSV
+        String csvContent = convertToCSV(combinedList);
+
+        // Send email with attachment
+        String to = "recipient@example.com";
+        String subject = "Combined List CSV";
+        String body = "Please find the attached CSV file with the combined list data.";
+        emailService.sendEmailWithAttachment(to, subject, body, csvContent);
+    }
+}
