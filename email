@@ -1,84 +1,82 @@
-package com.example.exception;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 
-/**
- * CsvProcessingException is the base exception class for handling errors during
- * CSV processing. It includes nested subclasses for specific error scenarios such as
- * schema validation failures, duplicate records, and exclusion rule violations.
- */
-public class CsvProcessingException extends RuntimeException {
-    private final ErrorCode errorCode;
+import java.util.Properties;
 
-    /**
-     * Enum representing the different types of error codes for CSV processing.
-     */
-    public enum ErrorCode {
-        SCHEMA_VALIDATION_ERROR,
-        DUPLICATE_RECORD_ERROR,
-        EXCLUSION_RULE_ERROR,
-        // Add more error codes as needed
+@Configuration
+public class MailConfig {
+
+    @Value("${aws.ssm.smtpHost}")
+    private String smtpHost;
+
+    @Value("${aws.ssm.smtpPort}")
+    private int smtpPort;
+
+    @Value("${aws.ssm.smtpUsername}")
+    private String smtpUsername;
+
+    @Value("${aws.ssm.smtpPassword}")
+    private String smtpPassword;
+
+    @Bean
+    public JavaMailSender getJavaMailSender() {
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+        mailSender.setHost(smtpHost);
+        mailSender.setPort(smtpPort);
+
+        mailSender.setUsername(smtpUsername);
+        mailSender.setPassword(smtpPassword);
+
+        Properties props = mailSender.getJavaMailProperties();
+        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.debug", "false");
+
+        return mailSender;
     }
+}
 
-    /**
-     * Constructs a new CsvProcessingException with the specified detail message and error code.
-     *
-     * @param message   the detail message.
-     * @param errorCode the error code associated with the exception.
-     */
-    public CsvProcessingException(String message, ErrorCode errorCode) {
-        super(message);
-        this.errorCode = errorCode;
+
+
+
+
+
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+
+@Service
+public class EmailService {
+
+    @Autowired
+    private JavaMailSender mailSender;
+
+    @Value("${aws.ssm.smtpUsername}")
+    private String fromEmail;
+
+    public void sendEmailWithAttachment(String to, String subject, String body, String csvContent) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+        helper.setFrom(fromEmail);
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(body);
+
+        helper.addAttachment("combined_list.csv", new ByteArrayResource(csvContent.getBytes()));
+
+        mailSender.send(message);
     }
-
-    /**
-     * Retrieves the error code associated with this exception.
-     *
-     * @return the error code.
-     */
-    public ErrorCode getErrorCode() {
-        return errorCode;
-    }
-
-    /**
-     * Exception subclass for handling schema validation errors during CSV processing.
-     */
-    public static class SchemaValidationException extends CsvProcessingException {
-        /**
-         * Constructs a new SchemaValidationException with the specified detail message.
-         *
-         * @param message the detail message.
-         */
-        public SchemaValidationException(String message) {
-            super(message, ErrorCode.SCHEMA_VALIDATION_ERROR);
-        }
-    }
-
-    /**
-     * Exception subclass for handling duplicate record errors during CSV processing.
-     */
-    public static class DuplicateRecordException extends CsvProcessingException {
-        /**
-         * Constructs a new DuplicateRecordException with the specified detail message.
-         *
-         * @param message the detail message.
-         */
-        public DuplicateRecordException(String message) {
-            super(message, ErrorCode.DUPLICATE_RECORD_ERROR);
-        }
-    }
-
-    /**
-     * Exception subclass for handling exclusion rule violations during CSV processing.
-     */
-    public static class ExclusionRuleException extends CsvProcessingException {
-        /**
-         * Constructs a new ExclusionRuleException with the specified detail message.
-         *
-         * @param message the detail message.
-         */
-        public ExclusionRuleException(String message) {
-            super(message, ErrorCode.EXCLUSION_RULE_ERROR);
-        }
-    }
-
-    // Add more nested exception classes as needed for other specific error scenarios
 }
