@@ -1,11 +1,84 @@
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-mail</artifactId>
-</dependency>
+package com.example.exception;
 
+/**
+ * CsvProcessingException is the base exception class for handling errors during
+ * CSV processing. It includes nested subclasses for specific error scenarios such as
+ * schema validation failures, duplicate records, and exclusion rule violations.
+ */
+public class CsvProcessingException extends RuntimeException {
+    private final ErrorCode errorCode;
 
-<dependency>
-    <groupId>org.apache.commons</groupId>
-    <artifactId>commons-csv</artifactId>
-    <version>1.10.0</version>
-</dependency>
+    /**
+     * Enum representing the different types of error codes for CSV processing.
+     */
+    public enum ErrorCode {
+        SCHEMA_VALIDATION_ERROR,
+        DUPLICATE_RECORD_ERROR,
+        EXCLUSION_RULE_ERROR,
+        // Add more error codes as needed
+    }
+
+    /**
+     * Constructs a new CsvProcessingException with the specified detail message and error code.
+     *
+     * @param message   the detail message.
+     * @param errorCode the error code associated with the exception.
+     */
+    public CsvProcessingException(String message, ErrorCode errorCode) {
+        super(message);
+        this.errorCode = errorCode;
+    }
+
+    /**
+     * Retrieves the error code associated with this exception.
+     *
+     * @return the error code.
+     */
+    public ErrorCode getErrorCode() {
+        return errorCode;
+    }
+
+    /**
+     * Exception subclass for handling schema validation errors during CSV processing.
+     */
+    public static class SchemaValidationException extends CsvProcessingException {
+        /**
+         * Constructs a new SchemaValidationException with the specified detail message.
+         *
+         * @param message the detail message.
+         */
+        public SchemaValidationException(String message) {
+            super(message, ErrorCode.SCHEMA_VALIDATION_ERROR);
+        }
+    }
+
+    /**
+     * Exception subclass for handling duplicate record errors during CSV processing.
+     */
+    public static class DuplicateRecordException extends CsvProcessingException {
+        /**
+         * Constructs a new DuplicateRecordException with the specified detail message.
+         *
+         * @param message the detail message.
+         */
+        public DuplicateRecordException(String message) {
+            super(message, ErrorCode.DUPLICATE_RECORD_ERROR);
+        }
+    }
+
+    /**
+     * Exception subclass for handling exclusion rule violations during CSV processing.
+     */
+    public static class ExclusionRuleException extends CsvProcessingException {
+        /**
+         * Constructs a new ExclusionRuleException with the specified detail message.
+         *
+         * @param message the detail message.
+         */
+        public ExclusionRuleException(String message) {
+            super(message, ErrorCode.EXCLUSION_RULE_ERROR);
+        }
+    }
+
+    // Add more nested exception classes as needed for other specific error scenarios
+}
