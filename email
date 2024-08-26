@@ -80,3 +80,28 @@ public class EmailService {
         mailSender.send(message);
     }
 }
+
+
+
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.List;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+
+public class CsvUtils {
+
+    public static String convertToCSV(List<MyModel> models) throws IOException {
+        StringWriter writer = new StringWriter();
+        CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
+                .withHeader("Field1", "Field2", "Field3")); // Add headers here
+
+        for (MyModel model : models) {
+            csvPrinter.printRecord(model.getField1(), model.getField2(), model.isField3());
+        }
+
+        csvPrinter.flush();
+        return writer.toString();
+    }
+}
