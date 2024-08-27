@@ -2,23 +2,16 @@ String htmlBody = "<html>" +
                   "<body>" +
                   "<h1 style='color:#333;'>CSV Processing Report</h1>" +
                   "<p>Hello,</p>" +
-                  "<p>The CSV file processing has been completed successfully. Below are the key details:</p>" +
+                  "<p>The CSV file processing has been completed successfully.</p>" +
+                  "<p>Below are the key details:</p>" +
                   "<table style='border-collapse: collapse; width: 100%;'>" +
                   "<tr>" +
-                  "<th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Detail</th>" +
-                  "<th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Value</th>" +
+                  "<th style='border: 1px solid #444; padding: 4px; text-align: left; background-color: #f2f2f2;'>Detail</th>" +
+                  "<th style='border: 1px solid #444; padding: 4px; text-align: left; background-color: #f2f2f2;'>Value</th>" +
                   "</tr>" +
                   "<tr>" +
-                  "<td style='border: 1px solid #ddd; padding: 8px;'>Total Records Processed</td>" +
-                  "<td style='border: 1px solid #ddd; padding: 8px;'>" + totalRecords + "</td>" +
-                  "</tr>" +
-                  "<tr>" +
-                  "<td style='border: 1px solid #ddd; padding: 8px;'>Valid Records</td>" +
-                  "<td style='border: 1px solid #ddd; padding: 8px;'>" + validRecords + "</td>" +
-                  "</tr>" +
-                  "<tr>" +
-                  "<td style='border: 1px solid #ddd; padding: 8px;'>Invalid Records</td>" +
-                  "<td style='border: 1px solid #ddd; padding: 8px;'>" + invalidRecords + "</td>" +
+                  "<td style='border: 1px solid #444; padding: 4px;'>Total Successful Records</td>" +
+                  "<td style='border: 1px solid #444; padding: 4px;'>" + successCount + "</td>" +
                   "</tr>" +
                   "</table>" +
                   "<p>If you have any questions, feel free to contact us.</p>" +
