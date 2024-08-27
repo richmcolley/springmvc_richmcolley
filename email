@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 
@@ -14,21 +15,25 @@ import static org.mockito.Mockito.*;
 class ProcessCsvFileTest {
 
     @Test
-    void testProcessCsvFileWithExclusionRuleAndDynamoDB() {
+    void testProcessCsvFileWithExclusionRuleAndTimeStamp() {
         // Given
         String csvData = "Header1,Header2,Header3\n" +
                          "Value1,Value2,ExcludeMe\n" +  // This record should be excluded
                          "Value4,Value5,Value6";         // This record should remain
+
         InputStream inputStream = new ByteArrayInputStream(csvData.getBytes(StandardCharsets.UTF_8));
 
-        ProcessCsvFile processCsvFile = spy(new ProcessCsvFile());
+        // Mock PostgresService
+        PostgresService postgresService = mock(PostgresService.class);
+        Timestamp exclusionTimeStamp = new Timestamp(System.currentTimeMillis());
+        ModelClass exclusionModel = new ModelClass("Field1Value", "ExcludeMe", exclusionTimeStamp);
+        when(postgresService.fetchDataFromPostgres()).thenReturn(Arrays.asList(exclusionModel));
 
-        // Mocking the fetchDataFromPostgres method to return specific exclusion criteria
-        ModelClass exclusionModel = new ModelClass("Field1Value", "ExcludeMe");
-        doReturn(Arrays.asList(exclusionModel)).when(processCsvFile).fetchDataFromPostgres();
+        // Mock DataService (if needed)
+        DataService dataService = mock(DataService.class);
 
-        // Mocking retrieveFromDynamoDB to avoid actual DynamoDB interaction
-        doNothing().when(processCsvFile).retrieveFromDynamoDB();
+        // Create instance of ProcessCsvFile with mocks
+        ProcessCsvFile processCsvFile = new ProcessCsvFile(dataService, postgresService);
 
         // When
         List<ModelClass> result = processCsvFile.processCsvFile(inputStream, "testFileName.csv");
@@ -37,8 +42,5 @@ class ProcessCsvFileTest {
         // We expect only the valid record to be present after exclusion rule is applied
         assertEquals(1, result.size());
         assertEquals("Value6", result.get(0).getField3());
-
-        // Verify retrieveFromDynamoDB is called
-        verify(processCsvFile, times(1)).retrieveFromDynamoDB();
     }
 }
