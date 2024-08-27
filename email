@@ -1,20 +1,44 @@
-String htmlBody = "<html>" +
-                  "<body>" +
-                  "<h1 style='color:#333;'>CSV Processing Report</h1>" +
-                  "<p>Hello,</p>" +
-                  "<p>The CSV file processing has been completed successfully.</p>" +
-                  "<p>Below are the key details:</p>" +
-                  "<table style='border-collapse: collapse; width: 100%;'>" +
-                  "<tr>" +
-                  "<th style='border: 1px solid #444; padding: 4px; text-align: left; background-color: #f2f2f2;'>Detail</th>" +
-                  "<th style='border: 1px solid #444; padding: 4px; text-align: left; background-color: #f2f2f2;'>Value</th>" +
-                  "</tr>" +
-                  "<tr>" +
-                  "<td style='border: 1px solid #444; padding: 4px;'>Total Successful Records</td>" +
-                  "<td style='border: 1px solid #444; padding: 4px;'>" + successCount + "</td>" +
-                  "</tr>" +
-                  "</table>" +
-                  "<p>If you have any questions, feel free to contact us.</p>" +
-                  "<p>Thank you,<br>Your Company</p>" +
-                  "</body>" +
-                  "</html>";
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
+class ProcessCsvFileTest {
+
+    @Test
+    void testProcessCsvFileWithExclusionRuleAndDynamoDB() {
+        // Given
+        String csvData = "Header1,Header2,Header3\n" +
+                         "Value1,Value2,ExcludeMe\n" +  // This record should be excluded
+                         "Value4,Value5,Value6";         // This record should remain
+        InputStream inputStream = new ByteArrayInputStream(csvData.getBytes(StandardCharsets.UTF_8));
+
+        ProcessCsvFile processCsvFile = spy(new ProcessCsvFile());
+
+        // Mocking the fetchDataFromPostgres method to return specific exclusion criteria
+        ModelClass exclusionModel = new ModelClass("Field1Value", "ExcludeMe");
+        doReturn(Arrays.asList(exclusionModel)).when(processCsvFile).fetchDataFromPostgres();
+
+        // Mocking retrieveFromDynamoDB to avoid actual DynamoDB interaction
+        doNothing().when(processCsvFile).retrieveFromDynamoDB();
+
+        // When
+        List<ModelClass> result = processCsvFile.processCsvFile(inputStream, "testFileName.csv");
+
+        // Then
+        // We expect only the valid record to be present after exclusion rule is applied
+        assertEquals(1, result.size());
+        assertEquals("Value6", result.get(0).getField3());
+
+        // Verify retrieveFromDynamoDB is called
+        verify(processCsvFile, times(1)).retrieveFromDynamoDB();
+    }
+}
