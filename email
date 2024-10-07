@@ -1,1 +1,36 @@
+During the development of the new payment module, I consistently ensured transparency with stakeholders regarding project delays caused by unforeseen technical challenges. I kept the team and management updated and proposed realistic solutions to avoid false expectations, ensuring that our commitments were always grounded in reality.
 
+I led the team through a significant architecture migration, and during the process, I earned the trust of both the technical team and upper management by providing clear technical leadership and regularly communicating project progress. My transparency and consistent delivery built a strong foundation of trust, which resulted in successful project completion.
+
+1. Build a One-Team Culture to Make the Capability Model Successful:
+Self-Evaluation:
+
+I've worked hard to bring the team together by creating a space where everyone feels comfortable sharing their ideas. For example, when we faced a challenge during one of the Java + AWS projects, I organized brainstorming sessions with the team, which helped us solve issues faster and build a stronger, more collaborative culture.
+I also made sure that different teams, including the BizTalk team, were working closely with each other, especially during critical production fixes. This collaboration helped reduce downtime and ensured smoother operations.
+
+
+2. Develop Required Skills:
+Self-Evaluation:
+
+Over the past year, I’ve successfully led two major Java + AWS projects. These projects required a deep understanding of cloud infrastructure and microservices, so I made sure to stay up to date with the latest AWS technologies. Both projects were delivered without any issues in production.
+
+Additionally, I have been working with the team to develop skills in problem-solving. In our BizTalk projects, I ensured to got hands-on experience by involving myself in multiple changes and bug fixes. This practical experience has been key in skill development.
+
+
+3. Promote a Culture of Personal Accountability and Expert Craftsmanship:
+Self-Evaluation:
+
+I’ve made a point of leading by example when it comes to accountability. For instance, while working on the Java + AWS projects, I ensured that I owned both successes and failures. If something didn’t go as planned, I quickly stepped in to find a solution, making sure the team learned from the experience.
+
+
+
+
+I have worked hard to reduce rejections by focusing on process improvements. For instance, in a recent Residual automation project, we introduced automated validations early in the data flow, which significantly reduced the number of failed transactions. This streamlined the process and improved the overall customer experience.
+In a BizTalk Pure Stock transfer project, I led the implementation of a new error-handling mechanism that minimized manual interventions, reducing processing time and increasing the accuracy of case processing, which improved the STP rate.
+
+
+
+1. Support Strategic Objectives by Implementing Cost-Effective and Agile Technology Solutions:
+Self-Evaluation:
+
+I have implemented technology solutions that enhance agility while also being cost-effective. For example, in a Residual and Account regex, I led the implementation of serverless architecture using AWS Lambda. This reduced our infrastructure costs since we only pay for the compute time we use, eliminating expenses related to idle resources. Also, it reduces the manual work of Ops and prod support team.
