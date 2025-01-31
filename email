@@ -1,1 +1,26 @@
 
+**Business Impact:**  
+The unintended update of the RRO status to "COMPLETED" on the first TREV creation in Sonata caused significant operational inefficiencies. Since RRO is a long-running process, prematurely marking it as complete led to discrepancies in instruction statuses. This resulted in multiple downstream issues, including open Altus cases, unnecessary work item (WI) fallouts into the OPS queue, and an increased workload for both the Operations and Production Support teams. The misalignment of instruction updates disrupted workflow automation, leading to manual interventions, delays, and potential regulatory or compliance risks.  
+
+**Positive Outcome:**  
+By removing the instruction update logic from the Order Process Handler component, the workflow now aligns with the original BPM design, ensuring that instruction updates occur only after the last fund deal is completed. This correction has significantly reduced unnecessary WI fallouts, minimized manual interventions, and improved process efficiency. Additionally, the resolution has lowered the workload for the OPS and Production Support teams, allowing them to focus on more critical tasks. Overall, the fix has enhanced system reliability, optimized operational efficiency, and improved the accuracy of instruction processing.
+
+
+
+
+
+
+**Business Impact:**  
+The BPM workflow failure in scenarios where an adviser canceled an existing QUOTE instruction and submitted a new one caused disruptions in account and model linking. As a result, the requested model linking was not processed correctly, leading to incomplete or incorrect configurations. This issue increased the number of failures routed to the Production Support queue, requiring manual intervention. The delays and errors in processing adviser requests impacted operational efficiency, increased the workload for the support team, and potentially affected the end-client experience.  
+
+**Positive Outcome:**  
+By addressing the BPM workflow issue, the system now correctly handles canceled QUOTE instructions and processes new instructions without failure. This ensures that model linking requests from advisers are accurately executed, reducing errors and improving automation. The resolution has also minimized failures reaching the Production Support queue, allowing the team to focus on more critical tasks. Overall, the fix has enhanced process stability, improved operational efficiency, and provided a better experience for advisers and clients.
+
+
+
+
+**Business Impact:**  
+The SPS journey failure disrupted the automated case creation on Altus and the subsequent work item (WI) generation for OPS manual processing. As a result, the system became stuck in failure states, leaving instructions unattended and requiring manual intervention. This led to operational delays, increased manual workload for the OPS and Production Support teams, and potential service-level agreement (SLA) breaches. The inefficiency also impacted overall process reliability and could lead to adviser dissatisfaction due to delays in processing instructions.  
+
+**Positive Outcome:**  
+By resolving the failure, the system now ensures that cases are created on Altus correctly, and work items are generated without interruptions. This fix has improved automation, reducing the need for manual interventions and enhancing operational efficiency. The OPS and Production Support teams now have a lower workload, allowing them to focus on higher-priority tasks. Additionally, the improved reliability of the SPS journey enhances the overall user experience and ensures smoother instruction processing.
