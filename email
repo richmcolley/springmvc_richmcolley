@@ -1,26 +1,280 @@
+Constants.java
 
-**Business Impact:**  
-The unintended update of the RRO status to "COMPLETED" on the first TREV creation in Sonata caused significant operational inefficiencies. Since RRO is a long-running process, prematurely marking it as complete led to discrepancies in instruction statuses. This resulted in multiple downstream issues, including open Altus cases, unnecessary work item (WI) fallouts into the OPS queue, and an increased workload for both the Operations and Production Support teams. The misalignment of instruction updates disrupted workflow automation, leading to manual interventions, delays, and potential regulatory or compliance risks.  
+package com.example.demo.constants;
 
-**Positive Outcome:**  
-By removing the instruction update logic from the Order Process Handler component, the workflow now aligns with the original BPM design, ensuring that instruction updates occur only after the last fund deal is completed. This correction has significantly reduced unnecessary WI fallouts, minimized manual interventions, and improved process efficiency. Additionally, the resolution has lowered the workload for the OPS and Production Support teams, allowing them to focus on more critical tasks. Overall, the fix has enhanced system reliability, optimized operational efficiency, and improved the accuracy of instruction processing.
-
-
-
-
-
-
-**Business Impact:**  
-The BPM workflow failure in scenarios where an adviser canceled an existing QUOTE instruction and submitted a new one caused disruptions in account and model linking. As a result, the requested model linking was not processed correctly, leading to incomplete or incorrect configurations. This issue increased the number of failures routed to the Production Support queue, requiring manual intervention. The delays and errors in processing adviser requests impacted operational efficiency, increased the workload for the support team, and potentially affected the end-client experience.  
-
-**Positive Outcome:**  
-By addressing the BPM workflow issue, the system now correctly handles canceled QUOTE instructions and processes new instructions without failure. This ensures that model linking requests from advisers are accurately executed, reducing errors and improving automation. The resolution has also minimized failures reaching the Production Support queue, allowing the team to focus on more critical tasks. Overall, the fix has enhanced process stability, improved operational efficiency, and provided a better experience for advisers and clients.
+public class Constants {
+    public static final String[] PRODUCTS = {"ISA", "GIA", "JISA", "SIPP"};
+    public static final String[] ORDER_TYPES = {"ReregIn", "TransferIN"};
+    public static final String[] TRANSFER_MODES = {"Electronic", "Manual"};
+}
 
 
 
 
-**Business Impact:**  
-The SPS journey failure disrupted the automated case creation on Altus and the subsequent work item (WI) generation for OPS manual processing. As a result, the system became stuck in failure states, leaving instructions unattended and requiring manual intervention. This led to operational delays, increased manual workload for the OPS and Production Support teams, and potential service-level agreement (SLA) breaches. The inefficiency also impacted overall process reliability and could lead to adviser dissatisfaction due to delays in processing instructions.  
+ExceptionHandling.java
 
-**Positive Outcome:**  
-By resolving the failure, the system now ensures that cases are created on Altus correctly, and work items are generated without interruptions. This fix has improved automation, reducing the need for manual interventions and enhancing operational efficiency. The OPS and Production Support teams now have a lower workload, allowing them to focus on higher-priority tasks. Additionally, the improved reliability of the SPS journey enhances the overall user experience and ensures smoother instruction processing.
+package com.example.demo.exception;
+
+public class CustomException extends RuntimeException {
+    public CustomException(String message) {
+        super(message);
+    }
+}
+
+
+
+EstimatedDaysRequest.java
+
+package com.example.demo.model;
+
+public class EstimatedDaysRequest {
+    private String product;
+    private String orderType;
+    private String transferMode;
+    private String cedingPlatformCode;
+
+    // Getters and Setters
+    public String getProduct() { return product; }
+    public void setProduct(String product) { this.product = product; }
+    public String getOrderType() { return orderType; }
+    public void setOrderType(String orderType) { this.orderType = orderType; }
+    public String getTransferMode() { return transferMode; }
+    public void setTransferMode(String transferMode) { this.transferMode = transferMode; }
+    public String getCedingPlatformCode() { return cedingPlatformCode; }
+    public void setCedingPlatformCode(String cedingPlatformCode) { this.cedingPlatformCode = cedingPlatformCode; }
+}
+
+
+
+
+EstimatedDaysResponse.java
+
+package com.example.demo.model;
+
+public class EstimatedDaysResponse {
+    private String product;
+    private String orderType;
+    private String transferMode;
+    private String cedingPlatformCode;
+    private double estimatedDays; // Changed to double
+
+    // Constructor
+    public EstimatedDaysResponse(String product, String orderType, String transferMode, String cedingPlatformCode, double estimatedDays) {
+        this.product = product;
+        this.orderType = orderType;
+        this.transferMode = transferMode;
+        this.cedingPlatformCode = cedingPlatformCode;
+        this.estimatedDays = estimatedDays;
+    }
+
+    // Getters and Setters
+    public String getProduct() { return product; }
+    public void setProduct(String product) { this.product = product; }
+    public String getOrderType() { return orderType; }
+    public void setOrderType(String orderType) { this.orderType = orderType; }
+    public String getTransferMode() { return transferMode; }
+    public void setTransferMode(String transferMode) { this.transferMode = transferMode; }
+    public String getCedingPlatformCode() { return cedingPlatformCode; }
+    public void setCedingPlatformCode(String cedingPlatformCode) { this.cedingPlatformCode = cedingPlatformCode; }
+    public double getEstimatedDays() { return estimatedDays; }
+    public void setEstimatedDays(double estimatedDays) { this.estimatedDays = estimatedDays; }
+}
+
+
+DbResponse.java
+
+package com.example.demo.model;
+
+public class DbResponse {
+    private String cedingPlatformCode;
+    private int numberOfInstructions;
+    private double estimatedDays; // Changed to double
+
+    // Constructor, Getters, and Setters
+    public DbResponse(String cedingPlatformCode, int numberOfInstructions, double estimatedDays) {
+        this.cedingPlatformCode = cedingPlatformCode;
+        this.numberOfInstructions = numberOfInstructions;
+        this.estimatedDays = estimatedDays;
+    }
+
+    public String getCedingPlatformCode() { return cedingPlatformCode; }
+    public int getNumberOfInstructions() { return numberOfInstructions; }
+    public double getEstimatedDays() { return estimatedDays; }
+}
+
+
+ApplicationCacheManager.java
+
+package com.example.demo.cache;
+
+import com.example.demo.model.DbResponse;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+@Component
+public class ApplicationCacheManager {
+
+    @Cacheable(value = "estimatedDaysCache", key = "#product + '-' + #orderType + '-' + #transferMode")
+    public List<DbResponse> getCachedData(String product, String orderType, String transferMode) {
+        return null; // This will force a DB call if cache is empty
+    }
+}
+
+
+DbService.java
+
+package com.example.demo.service;
+
+import com.example.demo.model.DbResponse;
+import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.List;
+
+@Service
+public class DbService {
+
+    public List<DbResponse> fetchDataFromDb(String product, String orderType, String transferMode) {
+        // Mock DB response with decimal estimatedDays
+        return Arrays.asList(
+                new DbResponse("PlatformA", 10, 5.5),
+                new DbResponse("PlatformB", 15, 7.25)
+        );
+    }
+}
+
+
+CacheService.java
+
+package com.example.demo.service;
+
+import com.example.demo.cache.ApplicationCacheManager;
+import com.example.demo.constants.Constants;
+import com.example.demo.exception.CustomException;
+import com.example.demo.model.DbResponse;
+import com.example.demo.model.EstimatedDaysRequest;
+import com.example.demo.model.EstimatedDaysResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class CacheService {
+
+    @Autowired
+    private ApplicationCacheManager cacheManager;
+
+    @Autowired
+    private DbService dbService;
+
+    public List<EstimatedDaysResponse> getEstimatedDays(List<EstimatedDaysRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            throw new CustomException("Request list cannot be null or empty.");
+        }
+
+        List<EstimatedDaysResponse> responses = new ArrayList<>();
+
+        for (EstimatedDaysRequest request : requests) {
+            validateRequest(request);
+            String cacheKey = generateCacheKey(request);
+            List<DbResponse> cachedData = cacheManager.getCachedData(request.getProduct(), request.getOrderType(), request.getTransferMode());
+
+            if (cachedData == null) {
+                cachedData = dbService.fetchDataFromDb(request.getProduct(), request.getOrderType(), request.getTransferMode());
+            }
+
+            double estimatedDays = findEstimatedDays(cachedData, request.getCedingPlatformCode());
+            responses.add(createResponse(request, estimatedDays));
+        }
+
+        return responses;
+    }
+
+    private void validateRequest(EstimatedDaysRequest request) {
+        if (request.getProduct() == null || request.getOrderType() == null || request.getTransferMode() == null || request.getCedingPlatformCode() == null) {
+            throw new CustomException("All fields in the request must be non-null.");
+        }
+    }
+
+    private String generateCacheKey(EstimatedDaysRequest request) {
+        return request.getProduct() + "-" + request.getOrderType() + "-" + request.getTransferMode();
+    }
+
+    private double findEstimatedDays(List<DbResponse> cachedData, String cedingPlatformCode) {
+        return cachedData.stream()
+                .filter(data -> data.getCedingPlatformCode().equals(cedingPlatformCode))
+                .map(DbResponse::getEstimatedDays)
+                .findFirst()
+                .orElseThrow(() -> new CustomException("No data found for the provided cedingPlatformCode."));
+    }
+
+    private EstimatedDaysResponse createResponse(EstimatedDaysRequest request, double estimatedDays) {
+        return new EstimatedDaysResponse(
+                request.getProduct(),
+                request.getOrderType(),
+                request.getTransferMode(),
+                request.getCedingPlatformCode(),
+                estimatedDays
+        );
+    }
+
+    public void initializeCache() {
+        for (String product : Constants.PRODUCTS) {
+            for (String orderType : Constants.ORDER_TYPES) {
+                for (String transferMode : Constants.TRANSFER_MODES) {
+                    dbService.fetchDataFromDb(product, orderType, transferMode);
+                }
+            }
+        }
+    }
+}
+
+
+ApiController.java
+
+package com.example.demo.controller;
+
+import com.example.demo.exception.CustomException;
+import com.example.demo.model.EstimatedDaysRequest;
+import com.example.demo.model.EstimatedDaysResponse;
+import com.example.demo.service.CacheService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api")
+public class ApiController {
+
+    @Autowired
+    private CacheService cacheService;
+
+    @PostMapping("/fetchEstimatedDays")
+    public ResponseEntity<?> fetchEstimatedDays(@RequestBody List<EstimatedDaysRequest> requests) {
+        try {
+            List<EstimatedDaysResponse> responses = cacheService.getEstimatedDays(requests);
+            return new ResponseEntity<>(responses, HttpStatus.OK);
+        } catch (CustomException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/initializeCache")
+    public ResponseEntity<String> initializeCache() {
+        try {
+            cacheService.initializeCache();
+            return new ResponseEntity<>("Cache initialized with all combinations!", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to initialize cache.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+}
