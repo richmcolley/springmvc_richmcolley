@@ -1,152 +1,84 @@
-Constants.java
-
-package com.example.demo.constants;
-
-public class Constants {
-    public static final String[] PRODUCTS = {"ISA", "GIA", "JISA", "SIPP"};
-    public static final String[] ORDER_TYPES = {"ReregIn", "TransferIN"};
-    public static final String[] TRANSFER_MODES = {"Electronic", "Manual"};
-}
-
-
-
-
-ExceptionHandling.java
-
-package com.example.demo.exception;
-
-public class CustomException extends RuntimeException {
-    public CustomException(String message) {
-        super(message);
-    }
-}
-
-
-
-EstimatedDaysRequest.java
-
-package com.example.demo.model;
-
-public class EstimatedDaysRequest {
-    private String product;
-    private String orderType;
-    private String transferMode;
-    private String cedingPlatformCode;
-
-    // Getters and Setters
-    public String getProduct() { return product; }
-    public void setProduct(String product) { this.product = product; }
-    public String getOrderType() { return orderType; }
-    public void setOrderType(String orderType) { this.orderType = orderType; }
-    public String getTransferMode() { return transferMode; }
-    public void setTransferMode(String transferMode) { this.transferMode = transferMode; }
-    public String getCedingPlatformCode() { return cedingPlatformCode; }
-    public void setCedingPlatformCode(String cedingPlatformCode) { this.cedingPlatformCode = cedingPlatformCode; }
-}
-
-
-
-
-EstimatedDaysResponse.java
-
-package com.example.demo.model;
-
-public class EstimatedDaysResponse {
-    private String product;
-    private String orderType;
-    private String transferMode;
-    private String cedingPlatformCode;
-    private double estimatedDays; // Changed to double
-
-    // Constructor
-    public EstimatedDaysResponse(String product, String orderType, String transferMode, String cedingPlatformCode, double estimatedDays) {
-        this.product = product;
-        this.orderType = orderType;
-        this.transferMode = transferMode;
-        this.cedingPlatformCode = cedingPlatformCode;
-        this.estimatedDays = estimatedDays;
-    }
-
-    // Getters and Setters
-    public String getProduct() { return product; }
-    public void setProduct(String product) { this.product = product; }
-    public String getOrderType() { return orderType; }
-    public void setOrderType(String orderType) { this.orderType = orderType; }
-    public String getTransferMode() { return transferMode; }
-    public void setTransferMode(String transferMode) { this.transferMode = transferMode; }
-    public String getCedingPlatformCode() { return cedingPlatformCode; }
-    public void setCedingPlatformCode(String cedingPlatformCode) { this.cedingPlatformCode = cedingPlatformCode; }
-    public double getEstimatedDays() { return estimatedDays; }
-    public void setEstimatedDays(double estimatedDays) { this.estimatedDays = estimatedDays; }
-}
-
-
-DbResponse.java
-
-package com.example.demo.model;
-
-public class DbResponse {
-    private String cedingPlatformCode;
-    private int numberOfInstructions;
-    private double estimatedDays; // Changed to double
-
-    // Constructor, Getters, and Setters
-    public DbResponse(String cedingPlatformCode, int numberOfInstructions, double estimatedDays) {
-        this.cedingPlatformCode = cedingPlatformCode;
-        this.numberOfInstructions = numberOfInstructions;
-        this.estimatedDays = estimatedDays;
-    }
-
-    public String getCedingPlatformCode() { return cedingPlatformCode; }
-    public int getNumberOfInstructions() { return numberOfInstructions; }
-    public double getEstimatedDays() { return estimatedDays; }
-}
-
-
-ApplicationCacheManager.java
-
-package com.example.demo.cache;
+package com.example.demo.repository;
 
 import com.example.demo.model.DbResponse;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
-@Component
-public class ApplicationCacheManager {
+@Repository
+public class JdbcRepository {
 
-    @Cacheable(value = "estimatedDaysCache", key = "#product + '-' + #orderType + '-' + #transferMode")
-    public List<DbResponse> getCachedData(String product, String orderType, String transferMode) {
-        return null; // This will force a DB call if cache is empty
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    public List<DbResponse> fetchDataFromDb(String product, String orderType, String transferMode) {
+        String sql = "SELECT c.ceding_platform_code, " +
+                     "SUM(i.number_of_instructions) AS number_of_instructions, " +
+                     "SUM(t.estimated_days * i.number_of_instructions) / SUM(i.number_of_instructions) AS estimated_days " +
+                     "FROM ceding_platform c " +
+                     "JOIN instructions i ON c.id = i.ceding_platform_id " +
+                     "JOIN transactions t ON i.id = t.instruction_id " +
+                     "WHERE c.product = ? AND c.order_type = ? AND c.transfer_mode = ? " +
+                     "GROUP BY c.ceding_platform_code";
+
+        return jdbcTemplate.query(sql, new Object[]{product, orderType, transferMode}, new RowMapper<DbResponse>() {
+            @Override
+            public DbResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
+                return new DbResponse(
+                        rs.getString("ceding_platform_code"),
+                        rs.getInt("number_of_instructions"),
+                        rs.getDouble("estimated_days")
+                );
+            }
+        });
     }
 }
 
 
-DbService.java
+
+
+
+
+
+
+
+
+
 
 package com.example.demo.service;
 
 import com.example.demo.model.DbResponse;
+import com.example.demo.repository.JdbcRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Service
 public class DbService {
 
+    @Autowired
+    private JdbcRepository jdbcRepository;
+
     public List<DbResponse> fetchDataFromDb(String product, String orderType, String transferMode) {
-        // Mock DB response with decimal estimatedDays
-        return Arrays.asList(
-                new DbResponse("PlatformA", 10, 5.5),
-                new DbResponse("PlatformB", 15, 7.25)
-        );
+        return jdbcRepository.fetchDataFromDb(product, orderType, transferMode);
     }
 }
 
 
-CacheService.java
+
+
+
+
+
+
+
+
 
 package com.example.demo.service;
 
@@ -234,7 +166,15 @@ public class CacheService {
 }
 
 
-ApiController.java
+
+
+
+
+
+
+
+
+
 
 package com.example.demo.controller;
 
@@ -276,5 +216,56 @@ public class ApiController {
         } catch (Exception e) {
             return new ResponseEntity<>("Failed to initialize cache.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+}
+
+
+
+
+
+
+
+
+
+package com.example.demo.cache;
+
+import com.example.demo.model.DbResponse;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+@Component
+public class ApplicationCacheManager {
+
+    /**
+     * Retrieves cached data for the given combination of product, orderType, and transferMode.
+     * If the data is not found in the cache, it returns null, forcing a DB call.
+     *
+     * @param product      The product type (e.g., ISA, GIA).
+     * @param orderType    The order type (e.g., ReregIn, TransferIN).
+     * @param transferMode The transfer mode (e.g., Electronic, Manual).
+     * @return A list of DbResponse objects from the cache, or null if not found.
+     */
+    @Cacheable(value = "estimatedDaysCache", key = "#product + '-' + #orderType + '-' + #transferMode")
+    public List<DbResponse> getCachedData(String product, String orderType, String transferMode) {
+        // This method will only be executed if the cache does not contain the data.
+        // Returning null forces a DB call.
+        return null;
+    }
+
+    /**
+     * Updates the cache with new data for the given combination of product, orderType, and transferMode.
+     *
+     * @param product      The product type (e.g., ISA, GIA).
+     * @param orderType    The order type (e.g., ReregIn, TransferIN).
+     * @param transferMode The transfer mode (e.g., Electronic, Manual).
+     * @param data         The data to be cached.
+     */
+    @CachePut(value = "estimatedDaysCache", key = "#product + '-' + #orderType + '-' + #transferMode")
+    public List<DbResponse> updateCache(String product, String orderType, String transferMode, List<DbResponse> data) {
+        // This method updates the cache with the provided data.
+        return data;
     }
 }
