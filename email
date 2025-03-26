@@ -1,78 +1,21 @@
 package com.example.demo.repository;
 
-import com.example.demo.model.DbResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 
 @Repository
-public class JdbcRepository {
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    public List<DbResponse> fetchDataFromDb(String product, String orderType, String transferMode) {
-        String sql = "SELECT c.ceding_platform_code, " +
-                     "SUM(i.number_of_instructions) AS number_of_instructions, " +
-                     "SUM(t.estimated_days * i.number_of_instructions) / SUM(i.number_of_instructions) AS estimated_days " +
-                     "FROM ceding_platform c " +
-                     "JOIN instructions i ON c.id = i.ceding_platform_id " +
-                     "JOIN transactions t ON i.id = t.instruction_id " +
-                     "WHERE c.product = ? AND c.order_type = ? AND c.transfer_mode = ? " +
-                     "GROUP BY c.ceding_platform_code";
-
-        return jdbcTemplate.query(sql, new Object[]{product, orderType, transferMode}, new RowMapper<DbResponse>() {
-            @Override
-            public DbResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
-                return new DbResponse(
-                        rs.getString("ceding_platform_code"),
-                        rs.getInt("number_of_instructions"),
-                        rs.getDouble("estimated_days")
-                );
-            }
-        });
-    }
+public interface EstimatedDaysRepository extends JpaRepository<TableA, Long> {
+    
+    @Query("SELECT t.estimatedDays FROM TableA t WHERE t.product = :product AND t.transferMode = :transferMode AND t.orderType = :orderType")
+    List<Double> findEstimatedDaysByConditions(
+            @Param("product") String product,
+            @Param("transferMode") String transferMode,
+            @Param("orderType") String orderType);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-package com.example.demo.service;
-
-import com.example.demo.model.DbResponse;
-import com.example.demo.repository.JdbcRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-
-@Service
-public class DbService {
-
-    @Autowired
-    private JdbcRepository jdbcRepository;
-
-    public List<DbResponse> fetchDataFromDb(String product, String orderType, String transferMode) {
-        return jdbcRepository.fetchDataFromDb(product, orderType, transferMode);
-    }
-}
-
-
-
-
 
 
 
@@ -83,16 +26,17 @@ public class DbService {
 package com.example.demo.service;
 
 import com.example.demo.cache.ApplicationCacheManager;
-import com.example.demo.constants.Constants;
 import com.example.demo.exception.CustomException;
 import com.example.demo.model.DbResponse;
 import com.example.demo.model.EstimatedDaysRequest;
 import com.example.demo.model.EstimatedDaysResponse;
+import com.example.demo.repository.EstimatedDaysRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CacheService {
@@ -103,66 +47,96 @@ public class CacheService {
     @Autowired
     private DbService dbService;
 
-    public List<EstimatedDaysResponse> getEstimatedDays(List<EstimatedDaysRequest> requests) {
-        if (requests == null || requests.isEmpty()) {
-            throw new CustomException("Request list cannot be null or empty.");
-        }
+    @Autowired
+    private EstimatedDaysRepository estimatedDaysRepository;
 
+    public List<EstimatedDaysResponse> getEstimatedDays(List<EstimatedDaysRequest> requests) {
         List<EstimatedDaysResponse> responses = new ArrayList<>();
 
         for (EstimatedDaysRequest request : requests) {
             validateRequest(request);
-            String cacheKey = generateCacheKey(request);
-            List<DbResponse> cachedData = cacheManager.getCachedData(request.getProduct(), request.getOrderType(), request.getTransferMode());
-
-            if (cachedData == null) {
-                cachedData = dbService.fetchDataFromDb(request.getProduct(), request.getOrderType(), request.getTransferMode());
+            
+            // Try to get from cache first
+            Optional<Double> cachedEstimatedDays = getFromCache(request);
+            
+            if (cachedEstimatedDays.isPresent()) {
+                responses.add(createResponse(request, cachedEstimatedDays.get()));
+                continue;
             }
-
-            double estimatedDays = findEstimatedDays(cachedData, request.getCedingPlatformCode());
-            responses.add(createResponse(request, estimatedDays));
+            
+            // If not in cache, try to get from main database
+            Optional<Double> dbEstimatedDays = getFromMainDatabase(request);
+            
+            if (dbEstimatedDays.isPresent()) {
+                responses.add(createResponse(request, dbEstimatedDays.get()));
+                continue;
+            }
+            
+            // If not found anywhere, get from PostgreSQL fallback
+            Double postgresEstimatedDays = getFromPostgres(request);
+            responses.add(createResponse(request, postgresEstimatedDays));
         }
 
         return responses;
     }
 
-    private void validateRequest(EstimatedDaysRequest request) {
-        if (request.getProduct() == null || request.getOrderType() == null || request.getTransferMode() == null || request.getCedingPlatformCode() == null) {
-            throw new CustomException("All fields in the request must be non-null.");
-        }
-    }
-
-    private String generateCacheKey(EstimatedDaysRequest request) {
-        return request.getProduct() + "-" + request.getOrderType() + "-" + request.getTransferMode();
-    }
-
-    private double findEstimatedDays(List<DbResponse> cachedData, String cedingPlatformCode) {
-        return cachedData.stream()
-                .filter(data -> data.getCedingPlatformCode().equals(cedingPlatformCode))
-                .map(DbResponse::getEstimatedDays)
-                .findFirst()
-                .orElseThrow(() -> new CustomException("No data found for the provided cedingPlatformCode."));
-    }
-
-    private EstimatedDaysResponse createResponse(EstimatedDaysRequest request, double estimatedDays) {
-        return new EstimatedDaysResponse(
-                request.getProduct(),
-                request.getOrderType(),
-                request.getTransferMode(),
-                request.getCedingPlatformCode(),
-                estimatedDays
+    private Optional<Double> getFromCache(EstimatedDaysRequest request) {
+        List<DbResponse> cachedData = cacheManager.getCachedData(
+            request.getProduct(), 
+            request.getOrderType(), 
+            request.getTransferMode()
         );
+
+        if (cachedData != null) {
+            return cachedData.stream()
+                .filter(data -> data.getCedingPlatformCode().equals(request.getCedingPlatformCode()))
+                .map(DbResponse::getEstimatedDays)
+                .findFirst();
+        }
+        return Optional.empty();
     }
 
-    public void initializeCache() {
-        for (String product : Constants.PRODUCTS) {
-            for (String orderType : Constants.ORDER_TYPES) {
-                for (String transferMode : Constants.TRANSFER_MODES) {
-                    dbService.fetchDataFromDb(product, orderType, transferMode);
-                }
-            }
-        }
+    private Optional<Double> getFromMainDatabase(EstimatedDaysRequest request) {
+        // Implement your logic to fetch from main database if needed
+        // Return Optional.empty() if not implemented
+        return Optional.empty();
     }
+
+    private Double getFromPostgres(EstimatedDaysRequest request) {
+        List<Double> estimatedDaysList = estimatedDaysRepository.findEstimatedDaysByConditions(
+            request.getProduct(),
+            request.getTransferMode(),
+            request.getOrderType()
+        );
+        
+        if (!estimatedDaysList.isEmpty()) {
+            // Return the first match (or implement your own logic for multiple results)
+            return estimatedDaysList.get(0);
+        }
+        
+        // Default fallback value if nothing found
+        return -1.0;
+    }
+
+    // ... rest of your existing methods (validateRequest, createResponse, etc)
+}
+
+
+
+
+@Entity
+@Table(name = "table_a")
+public class TableA {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    private String product;
+    private String orderType;
+    private String transferMode;
+    private Double estimatedDays;
+    
+    // Getters and setters
 }
 
 
@@ -176,96 +150,78 @@ public class CacheService {
 
 
 
-package com.example.demo.controller;
 
-import com.example.demo.exception.CustomException;
-import com.example.demo.model.EstimatedDaysRequest;
-import com.example.demo.model.EstimatedDaysResponse;
-import com.example.demo.service.CacheService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
-@RestController
-@RequestMapping("/api")
-public class ApiController {
 
-    @Autowired
-    private CacheService cacheService;
 
-    @PostMapping("/fetchEstimatedDays")
-    public ResponseEntity<?> fetchEstimatedDays(@RequestBody List<EstimatedDaysRequest> requests) {
-        try {
-            List<EstimatedDaysResponse> responses = cacheService.getEstimatedDays(requests);
-            return new ResponseEntity<>(responses, HttpStatus.OK);
-        } catch (CustomException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
-    @GetMapping("/initializeCache")
-    public ResponseEntity<String> initializeCache() {
-        try {
-            cacheService.initializeCache();
-            return new ResponseEntity<>("Cache initialized with all combinations!", HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Failed to initialize cache.", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+public boolean isCacheInitialized() {
+    Cache cache = cacheManager.getCache("estimatedDaysCache");
+    return cache != null;
 }
 
 
 
-
-
-
-
-
-
-package com.example.demo.cache;
-
-import com.example.demo.model.DbResponse;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.stereotype.Component;
-
-import java.util.List;
-
-@Component
-public class ApplicationCacheManager {
-
-    /**
-     * Retrieves cached data for the given combination of product, orderType, and transferMode.
-     * If the data is not found in the cache, it returns null, forcing a DB call.
-     *
-     * @param product      The product type (e.g., ISA, GIA).
-     * @param orderType    The order type (e.g., ReregIn, TransferIN).
-     * @param transferMode The transfer mode (e.g., Electronic, Manual).
-     * @return A list of DbResponse objects from the cache, or null if not found.
-     */
-    @Cacheable(value = "estimatedDaysCache", key = "#product + '-' + #orderType + '-' + #transferMode")
-    public List<DbResponse> getCachedData(String product, String orderType, String transferMode) {
-        // This method will only be executed if the cache does not contain the data.
-        // Returning null forces a DB call.
-        return null;
+public List<EstimatedDaysResponse> getEstimatedDays(List<EstimatedDaysRequest> requests) {
+    List<EstimatedDaysResponse> responses = new ArrayList<>();
+    
+    boolean cacheAvailable = cacheManager.isCacheInitialized();
+    
+    for (EstimatedDaysRequest request : requests) {
+        validateRequest(request);
+        
+        Double estimatedDays;
+        
+        if (cacheAvailable) {
+            // 1. Try cache first if available
+            estimatedDays = tryGetFromCache(request)
+                       // 2. Fallback to PostgreSQL if not in cache
+                       .orElseGet(() -> getFromPostgres(request));
+        } else {
+            // Skip cache entirely if not available
+            estimatedDays = getFromPostgres(request);
+        }
+        
+        responses.add(createResponse(request, estimatedDays));
     }
+    
+    return responses;
+}
 
-    /**
-     * Updates the cache with new data for the given combination of product, orderType, and transferMode.
-     *
-     * @param product      The product type (e.g., ISA, GIA).
-     * @param orderType    The order type (e.g., ReregIn, TransferIN).
-     * @param transferMode The transfer mode (e.g., Electronic, Manual).
-     * @param data         The data to be cached.
-     */
-    @CachePut(value = "estimatedDaysCache", key = "#product + '-' + #orderType + '-' + #transferMode")
-    public List<DbResponse> updateCache(String product, String orderType, String transferMode, List<DbResponse> data) {
-        // This method updates the cache with the provided data.
-        return data;
+private Optional<Double> tryGetFromCache(EstimatedDaysRequest request) {
+    try {
+        List<DbResponse> cachedData = cacheManager.getCachedData(
+            request.getProduct(), 
+            request.getOrderType(), 
+            request.getTransferMode()
+        );
+        
+        return cachedData.stream()
+            .filter(data -> data.getCedingPlatformCode().equals(request.getCedingPlatformCode()))
+            .map(DbResponse::getEstimatedDays)
+            .findFirst();
+    } catch (Exception e) {
+        log.warn("Cache access failed, falling back to DB", e);
+        return Optional.empty();
+    }
+}
+
+private Double getFromPostgres(EstimatedDaysRequest request) {
+    try {
+        List<Double> results = estimatedDaysRepository.findEstimatedDaysByConditions(
+            request.getProduct(),
+            request.getTransferMode(),
+            request.getOrderType()
+        );
+        
+        if (!results.isEmpty()) {
+            // Business logic: take first, average, etc.
+            return results.get(0); 
+        }
+        return DEFAULT_ESTIMATED_DAYS; // e.g., -1.0
+    } catch (Exception e) {
+        log.error("Failed to fetch from PostgreSQL", e);
+        return DEFAULT_ESTIMATED_DAYS;
     }
 }
