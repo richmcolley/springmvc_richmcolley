@@ -1,227 +1,103 @@
-package com.example.demo.repository;
+<mxfile host="app.diagrams.net">
+  <diagram name="Exception Handling Flow - Professional">
+    <mxGraphModel dx="1422" dy="822" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
+        <!-- Title -->
+        <mxCell id="title" value="&lt;b&gt;&lt;font style=&quot;font-size: 18px&quot;&gt;Order Processing Exception Handling Flow&lt;/font&gt;&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="350" y="30" width="200" height="30" as="geometry"/>
+        </mxCell>
 
-import java.util.List;
+        <!-- Main Components -->
+        <!-- Camunda -->
+        <mxCell id="2" value="&lt;b&gt;Camunda Workflow Engine&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Initiates order processing&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;gradientColor=#6c8ebf;gradientDirection=north;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="100" width="180" height="80" as="geometry"/>
+        </mxCell>
 
-@Repository
-public interface EstimatedDaysRepository extends JpaRepository<TableA, Long> {
-    
-    @Query("SELECT t.estimatedDays FROM TableA t WHERE t.product = :product AND t.transferMode = :transferMode AND t.orderType = :orderType")
-    List<Double> findEstimatedDaysByConditions(
-            @Param("product") String product,
-            @Param("transferMode") String transferMode,
-            @Param("orderType") String orderType);
-}
+        <!-- TBS Cloud API -->
+        <mxCell id="3" value="&lt;b&gt;TBS Cloud API (POST)&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Processes order request&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;gradientColor=#9673a6;gradientDirection=north;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="100" width="180" height="80" as="geometry"/>
+        </mxCell>
 
+        <!-- Order DB -->
+        <mxCell id="4" value="&lt;b&gt;Order Database&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Stores order status&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;gradientColor=#d6b656;gradientDirection=north;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="100" width="120" height="90" as="geometry"/>
+        </mxCell>
 
+        <!-- Support Team -->
+        <mxCell id="5" value="&lt;b&gt;Support Team&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Manually resolves issues&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;gradientColor=#82b366;gradientDirection=north;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="250" width="120" height="70" as="geometry"/>
+        </mxCell>
 
+        <!-- Resume Workflow -->
+        <mxCell id="6" value="&lt;b&gt;Resume Workflow&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Retry processing&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;gradientColor=#b85450;gradientDirection=north;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="250" width="180" height="70" as="geometry"/>
+        </mxCell>
 
+        <!-- OPAL UI -->
+        <mxCell id="7" value="&lt;b&gt;OPAL User Interface&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Order status check&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;gradientColor=#d79b00;gradientDirection=north;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="400" width="180" height="70" as="geometry"/>
+        </mxCell>
 
+        <!-- TBS API GET -->
+        <mxCell id="8" value="&lt;b&gt;TBS Cloud API (GET)&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px&quot;&gt;Retrieves order status&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;gradientColor=#9673a6;gradientDirection=north;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="400" width="180" height="70" as="geometry"/>
+        </mxCell>
 
-
-package com.example.demo.service;
-
-import com.example.demo.cache.ApplicationCacheManager;
-import com.example.demo.exception.CustomException;
-import com.example.demo.model.DbResponse;
-import com.example.demo.model.EstimatedDaysRequest;
-import com.example.demo.model.EstimatedDaysResponse;
-import com.example.demo.repository.EstimatedDaysRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-@Service
-public class CacheService {
-
-    @Autowired
-    private ApplicationCacheManager cacheManager;
-
-    @Autowired
-    private DbService dbService;
-
-    @Autowired
-    private EstimatedDaysRepository estimatedDaysRepository;
-
-    public List<EstimatedDaysResponse> getEstimatedDays(List<EstimatedDaysRequest> requests) {
-        List<EstimatedDaysResponse> responses = new ArrayList<>();
-
-        for (EstimatedDaysRequest request : requests) {
-            validateRequest(request);
-            
-            // Try to get from cache first
-            Optional<Double> cachedEstimatedDays = getFromCache(request);
-            
-            if (cachedEstimatedDays.isPresent()) {
-                responses.add(createResponse(request, cachedEstimatedDays.get()));
-                continue;
-            }
-            
-            // If not in cache, try to get from main database
-            Optional<Double> dbEstimatedDays = getFromMainDatabase(request);
-            
-            if (dbEstimatedDays.isPresent()) {
-                responses.add(createResponse(request, dbEstimatedDays.get()));
-                continue;
-            }
-            
-            // If not found anywhere, get from PostgreSQL fallback
-            Double postgresEstimatedDays = getFromPostgres(request);
-            responses.add(createResponse(request, postgresEstimatedDays));
-        }
-
-        return responses;
-    }
-
-    private Optional<Double> getFromCache(EstimatedDaysRequest request) {
-        List<DbResponse> cachedData = cacheManager.getCachedData(
-            request.getProduct(), 
-            request.getOrderType(), 
-            request.getTransferMode()
-        );
-
-        if (cachedData != null) {
-            return cachedData.stream()
-                .filter(data -> data.getCedingPlatformCode().equals(request.getCedingPlatformCode()))
-                .map(DbResponse::getEstimatedDays)
-                .findFirst();
-        }
-        return Optional.empty();
-    }
-
-    private Optional<Double> getFromMainDatabase(EstimatedDaysRequest request) {
-        // Implement your logic to fetch from main database if needed
-        // Return Optional.empty() if not implemented
-        return Optional.empty();
-    }
-
-    private Double getFromPostgres(EstimatedDaysRequest request) {
-        List<Double> estimatedDaysList = estimatedDaysRepository.findEstimatedDaysByConditions(
-            request.getProduct(),
-            request.getTransferMode(),
-            request.getOrderType()
-        );
+        <!-- Arrows with labels -->
+        <mxCell id="10" value="Submit order" style="endArrow=block;endFill=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="2" target="3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
         
-        if (!estimatedDaysList.isEmpty()) {
-            // Return the first match (or implement your own logic for multiple results)
-            return estimatedDaysList.get(0);
-        }
+        <mxCell id="11" value="Store result" style="endArrow=block;endFill=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="3" target="4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
         
-        // Default fallback value if nothing found
-        return -1.0;
-    }
-
-    // ... rest of your existing methods (validateRequest, createResponse, etc)
-}
-
-
-
-
-@Entity
-@Table(name = "table_a")
-public class TableA {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
-    private String product;
-    private String orderType;
-    private String transferMode;
-    private Double estimatedDays;
-    
-    // Getters and setters
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-public boolean isCacheInitialized() {
-    Cache cache = cacheManager.getCache("estimatedDaysCache");
-    return cache != null;
-}
-
-
-
-public List<EstimatedDaysResponse> getEstimatedDays(List<EstimatedDaysRequest> requests) {
-    List<EstimatedDaysResponse> responses = new ArrayList<>();
-    
-    boolean cacheAvailable = cacheManager.isCacheInitialized();
-    
-    for (EstimatedDaysRequest request : requests) {
-        validateRequest(request);
+        <mxCell id="12" value="On failure" style="endArrow=block;endFill=1;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="3" target="5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
         
-        Double estimatedDays;
+        <mxCell id="13" value="Resolution" style="endArrow=block;endFill=1;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="5" target="6">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
         
-        if (cacheAvailable) {
-            // 1. Try cache first if available
-            estimatedDays = tryGetFromCache(request)
-                       // 2. Fallback to PostgreSQL if not in cache
-                       .orElseGet(() -> getFromPostgres(request));
-        } else {
-            // Skip cache entirely if not available
-            estimatedDays = getFromPostgres(request);
-        }
+        <mxCell id="14" value="Retry" style="endArrow=block;endFill=1;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="6" target="2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
         
-        responses.add(createResponse(request, estimatedDays));
-    }
-    
-    return responses;
-}
+        <mxCell id="15" value="Check status" style="endArrow=block;endFill=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="7" target="8">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="16" value="Query" style="endArrow=block;endFill=1;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="8" target="4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
 
-private Optional<Double> tryGetFromCache(EstimatedDaysRequest request) {
-    try {
-        List<DbResponse> cachedData = cacheManager.getCachedData(
-            request.getProduct(), 
-            request.getOrderType(), 
-            request.getTransferMode()
-        );
-        
-        return cachedData.stream()
-            .filter(data -> data.getCedingPlatformCode().equals(request.getCedingPlatformCode()))
-            .map(DbResponse::getEstimatedDays)
-            .findFirst();
-    } catch (Exception e) {
-        log.warn("Cache access failed, falling back to DB", e);
-        return Optional.empty();
-    }
-}
-
-private Double getFromPostgres(EstimatedDaysRequest request) {
-    try {
-        List<Double> results = estimatedDaysRepository.findEstimatedDaysByConditions(
-            request.getProduct(),
-            request.getTransferMode(),
-            request.getOrderType()
-        );
-        
-        if (!results.isEmpty()) {
-            // Business logic: take first, average, etc.
-            return results.get(0); 
-        }
-        return DEFAULT_ESTIMATED_DAYS; // e.g., -1.0
-    } catch (Exception e) {
-        log.error("Failed to fetch from PostgreSQL", e);
-        return DEFAULT_ESTIMATED_DAYS;
-    }
-}
+        <!-- Legend -->
+        <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="600" y="400" width="60" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend1" value="" style="shape=partialRectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;gradientColor=none;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="600" y="430" width="20" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend1txt" value="Workflow" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="625" y="430" width="60" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend2" value="" style="shape=partialRectangle;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;gradientColor=none;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="600" y="460" width="20" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend2txt" value="API Services" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="625" y="460" width="80" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend3" value="" style="shape=partialRectangle;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;gradientColor=none;overflow=hidden;" vertex="1" parent="1">
+          <mxGeometry x="600" y="490" width="20" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend3txt" value="Data Store" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="625" y="490" width="80" height="20" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
